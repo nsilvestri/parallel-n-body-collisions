@@ -55,4 +55,16 @@ public class Body
 	{
 		return radius;
 	}
+	
+	/* returns the X coordinate of this body's position. */
+	public double getXPos()
+	{
+		return position.getX();
+	}
+	
+	/* returns the Y coordinate of this body's position. */
+	public double getYPos()
+	{
+		return position.getY();
+	}
 }

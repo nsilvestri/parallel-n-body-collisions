@@ -26,6 +26,12 @@ public class Space extends Observable
 	{
 		this.bodies = bodies;
 	}
+	
+	/* This constructor does nothing just for quick initialization. */
+	public Space()
+	{
+		
+	}
 
 	/* moveBodies calls each body's move() method to recalculate their new
 	 * positions. It does not take collisions into account. */
@@ -35,5 +41,11 @@ public class Space extends Observable
 		{
 			b.move();
 		}
+	}
+	
+	/* getBodies() returns the array containing the bodies. */
+	public Body[] getBodies()
+	{
+		return bodies;
 	}
 }
