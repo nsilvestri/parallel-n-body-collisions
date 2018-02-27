@@ -44,8 +44,10 @@ public class Main extends Application
 
 		/* Intialize Model */
 		
-		Body[] bodies = new Body[1];
-		bodies[0] = new Body(0, 10, 0, 0, 1, 1);
+		// hard coded test array
+		Body[] bodies = new Body[2];
+		bodies[0] = new Body(10, 20, 200, 300, 0, 0);
+		bodies[1] = new Body(10, 20, 400, 300, 0, 0);
 		space = new Space(bodies);
 		
 		/* intialize observer */
@@ -65,13 +67,13 @@ public class Main extends Application
 			public void handle(long currentNanoTime)
 			{
 				space.moveBodies();
-				space.update();
+				space.setChangedAndNotifyObservers();
 			}
 			
 		}.start();
 
 		/* finish up the stage */
-		space.update();
+		space.setChangedAndNotifyObservers();
 		Scene scene = new Scene(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 		stage.setScene(scene);
 		stage.show();
