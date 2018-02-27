@@ -6,7 +6,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
-/* Main is the class that starts the application. This initializes the stage, scene, observers, and model of the program.
+/* Main is the class that starts the application. This initializes the stage,
+ * scene, observers, and model of the program.
  * 
  */
 
@@ -15,8 +16,7 @@ public class Main extends Application
 
 	private static final int WINDOW_WIDTH = 600;
 	private static final int WINDOW_HEIGHT = 600;
-	
-	
+
 	public static void main(String[] args)
 	{
 		/* TODO: eventually make this work from command line and not visually, but for
