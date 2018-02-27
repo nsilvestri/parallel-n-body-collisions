@@ -32,6 +32,12 @@ public class Space extends Observable
 	{
 		
 	}
+	
+	public void update()
+	{
+		setChanged();
+		notifyObservers();
+	}
 
 	/* moveBodies calls each body's move() method to recalculate their new
 	 * positions. It does not take collisions into account. */

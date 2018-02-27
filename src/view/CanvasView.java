@@ -24,14 +24,21 @@ public class CanvasView extends BorderPane implements Observer
 		
 		canvas = new Canvas(width, height);
 		gc = canvas.getGraphicsContext2D();
+		
+		this.setCenter(canvas);
 	}
 	
+	/* update() is called whenever the observed Space object calls notifyObservers(). In this implementation, this
+	 * happens to be 60 times per second, because of the AnimationTimer in Main.java.
+	 */
 	@Override
 	public void update(Observable o, Object arg)
 	{
 		space = (Space) o;
 		
+		gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight()); // reset the canvas
 		gc.setStroke(Color.BLACK);
+		// draw each body
 		for (Body b : space.getBodies())
 		{
 			// x and y coord need to be offset from the center to the corner in
