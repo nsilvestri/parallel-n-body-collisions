@@ -7,7 +7,7 @@ public class Sequential {
 	static Point point;
 	static Point[] positions, velocities, forces;
 	static double[] masses;
-	static final double G = .6; 
+	static final double G = .6; //TODO: change this
 	static int numBodies;
 	static double dt; //delta time. Length of time step
 
@@ -27,25 +27,28 @@ public class Sequential {
 		velocities = new Point[numBodies];
 		
 		//initialize forces
-		//TODO: put in actual values??
+		//Don't need to initialize values because we calculate them
 		forces = new Point[numBodies];
 		
 		//initialize masses
+		//Assumed that bodies have equal masses
 		masses = new double[numBodies];
 		for (int i = 0; i < numBodies; i++) {
 			masses[i] = massSize;
 		}
 		
 		//initialize timesteps 
-		//Not sure what this value is
+		//Not sure what this value should be
 		dt = Double.parseDouble(args[2]);
 		
+		//run the simulation
 		for (int i = 0; i < dt; i++) {
 			calculateForces();
 			moveBodies();
 		}
 	}
 	
+	//calculate total force for every pair of bodies
 	public static void calculateForces() {
 		double distance, magnitude;
 		Point direction;
@@ -61,15 +64,18 @@ public class Sequential {
 				direction = new Point((int) (positions[j].getX() - positions[i].getX()), 
 						(int) (positions[j].getY() - positions[i].getY()));
 				
-				forces[i].x = (int) (forces[i].getX() + magnitude*direction.getX() / distance);
-				forces[j].x = (int) (forces[j].getX() + magnitude*direction.getX() / distance);
-				forces[i].y = (int) (forces[i].getY() + magnitude*direction.getY() / distance);
-				forces[i].y = (int) (forces[i].getY() + magnitude*direction.getY() / distance);
+				int ix = (int) (forces[i].getX() + magnitude*direction.getX() / distance);
+				int jx = (int) (forces[j].getX() + magnitude*direction.getX() / distance);
+				int iy = (int) (forces[i].getY() + magnitude*direction.getY() / distance);
+				int jy = (int) (forces[i].getY() + magnitude*direction.getY() / distance);
 				
+				forces[i].move(ix, iy);
+				forces[j].move(jx, jy);
 			}
 		}
 	}
 	
+	//calculate new velocity/position for every body
 	public static void moveBodies() {
 		Point deltaV; //dv = f/m * DT
 		Point deltaP; //dp = (v + dv/2) * DT
@@ -81,12 +87,15 @@ public class Sequential {
 			deltaP = new Point((int) ((velocities[i].getX() + deltaV.getX() / 2) * dt),
 			(int) ((velocities[i].getY() + deltaV.getY() / 2) * dt));
 			
-			velocities[i].x = (int) (velocities[i].getX() * deltaV.getX());
-			velocities[i].y = (int) (velocities[i].getX() * deltaV.getX());
-			positions[i].x = (int) (positions[i].getX() + deltaP.getX());
-			positions[i].y = (int) (positions[i].getY() + deltaP.getY());
-			forces[i].x = 0; //reset force vector
-			forces[i].y = 0;
+			int newX = (int) (velocities[i].getX() * deltaV.getX());
+			int newY = (int) (velocities[i].getX() * deltaV.getX());
+			velocities[i].move(newX, newY);
+			
+			newX = (int) (positions[i].getX() + deltaP.getX());
+			newY = (int) (positions[i].getY() + deltaP.getY());
+			positions[i].move(newX, newY);
+			
+			forces[i].move(0, 0);
 		}
 	}
 	
