@@ -1,6 +1,5 @@
 package model;
 
-import java.awt.Point;
 import java.awt.geom.Point2D;
 import java.util.Observable;
 
@@ -54,9 +53,11 @@ public class Space extends Observable
 	{
 		Point2D.Double[] forces = calculateForces();
 		moveBodiesByForce(forces);
+		setChangedAndNotifyObservers();
 	}
 
-	/* calculateForces() calculates the net force on every pair of bodies. */
+	/* calculateForces() calculates the net force on every pair of bodies and returns the array of forces of each
+	 * associated body. The index of the forces matches the index of its associated body. */
 	public Point2D.Double[] calculateForces()
 	{
 		double distance, magnitude;
@@ -77,8 +78,8 @@ public class Space extends Observable
 				magnitude = (G * bodies[i].getMass() * bodies[j].getMass()) / Math.pow(distance, 2);
 
 				// Direction is the vector of the difference between the two x and y positions
-				direction = new Point2D.Double((int) (bodies[j].getXPos() - bodies[i].getXPos()),
-						(int) (bodies[j].getYPos() - bodies[i].getYPos()));
+				direction = new Point2D.Double((bodies[j].getXPos() - bodies[i].getXPos()),
+						(bodies[j].getYPos() - bodies[i].getYPos()));
 
 				// calculate values of the forces for x and y components, and add them to the
 				// net forces
@@ -92,7 +93,7 @@ public class Space extends Observable
 				forces[j].setLocation(jx, jy);
 			}
 		}
-		
+
 		return forces;
 	}
 
@@ -104,13 +105,13 @@ public class Space extends Observable
 
 		for (int i = 0; i < nBodies; i++)
 		{
-			// Velocity = (Force / Mass) * timestep. This is just F = ma derived for velocity 
+			// Velocity = (Force / Mass) * timestep. This is just F = ma derived for
+			// velocity
 			deltaV = new Point2D.Double(((forces[i].getX() / bodies[i].getMass()) * timestep),
 					(forces[i].getY() / bodies[i].getMass() * timestep));
 
-			
-			deltaP = new Point2D.Double( ((bodies[i].getVelocity().getX() + deltaV.getX() / 2) * timestep),
-					(int) ((bodies[i].getVelocity().getY() + deltaV.getY() / 2) * timestep));
+			deltaP = new Point2D.Double(((bodies[i].getVelocity().getX() + deltaV.getX() / 2) * timestep),
+					((bodies[i].getVelocity().getY() + deltaV.getY() / 2) * timestep));
 
 			double newX = (bodies[i].getVelocity().getX() * deltaV.getX());
 			double newY = (bodies[i].getVelocity().getX() * deltaV.getX());
