@@ -45,10 +45,11 @@ public class Main extends Application
 		/* Intialize Model */
 		
 		// hard coded test array
-		Body[] bodies = new Body[2];
-		bodies[0] = new Body(20e8, 20, 150, 250, 0, 1000);
-		bodies[1] = new Body(20e8, 20, 450, 250, 0, -1000);
-		//. bodies[2] = new Body(20, 20, 300, 450, -500, 600);
+		Body[] bodies = new Body[4];
+		bodies[0] = new Body(20e6, 20, 300, 300, 0, 0);
+		bodies[1] = new Body(20e4, 10, 400, 300, 0, -10);
+		bodies[2] = new Body(20e4, 6, 300, 450, 9, 0);
+		bodies[3] = new Body(5e4, 2, 100, 300, 0, 8);
 		space = new Space(bodies);
 		
 		/* intialize observer */

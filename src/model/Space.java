@@ -53,7 +53,15 @@ public class Space extends Observable
 	public void moveBodies()
 	{
 		Point2D.Double[] forces = calculateForces();
+		
+		// currently this just adjusts the velocity for every body, and then each body moves with the following for loop
 		moveBodiesByForce(forces);
+		
+		for (Body b : bodies)
+		{
+			b.move();
+		}
+		
 		setChangedAndNotifyObservers();
 	}
 
@@ -67,6 +75,7 @@ public class Space extends Observable
 
 		Point2D.Double[] forces = new Point2D.Double[nBodies];
 
+		// intialize Point2D.Double objects in array
 		for (int i = 0; i < nBodies; i++)
 		{
 			forces[i] = new Point2D.Double();
@@ -119,14 +128,12 @@ public class Space extends Observable
 			deltaP = new Point2D.Double(((bodies[i].getVelocity().getX() + deltaV.getX() / 2) * timestep),
 					((bodies[i].getVelocity().getY() + deltaV.getY() / 2) * timestep));
 
-			double newX = (bodies[i].getVelocity().getX() + deltaV.getX());
-			double newY = (bodies[i].getVelocity().getY() + deltaV.getY());
-			bodies[i].setVelocity(new Point2D.Double(newX, newY));
+			bodies[i].changeVelocityBy(deltaV);
+			// bodies[i].setVelocity(new Point2D.Double(newX, newY));
 
-			newX = (bodies[i].getXPos() + deltaP.getX());
-			newY = (bodies[i].getYPos() + deltaP.getY());
-			bodies[i].setPosition(new Point2D.Double(newX, newY));
-			System.out.println();
+			//newX = (bodies[i].getXPos() + deltaP.getX());
+			// newY = (bodies[i].getYPos() + deltaP.getY());
+			// bodies[i].setPosition(new Point2D.Double(newX, newY));
 		}
 	}
 
