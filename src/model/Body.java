@@ -28,9 +28,16 @@ public class Body
 		position.y += velocity.getY();
 	}
 	
+	/* setPosition() this body's position to the given position. */
 	public void setPosition(Point2D.Double newPos)
 	{
 		position = newPos;
+	}
+	
+	/* setPosition() this body's position to the given position. */
+	public void setVelocity(Point2D.Double newVelocity)
+	{
+		velocity = newVelocity;
 	}
 	
 	/* getPosition() returns the Point2D.Double that stores this body's
@@ -71,5 +78,11 @@ public class Body
 	public double getYPos()
 	{
 		return position.getY();
+	}
+	
+	public String toString()
+	{
+		return "Body[" + position.getX() + ", " + position.getY() + "]";
+		
 	}
 }

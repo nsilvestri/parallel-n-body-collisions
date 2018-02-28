@@ -57,15 +57,16 @@ public class Space extends Observable
 		setChangedAndNotifyObservers();
 	}
 
-	/* calculateForces() calculates the net force on every pair of bodies and returns the array of forces of each
-	 * associated body. The index of the forces matches the index of its associated body. */
+	/* calculateForces() calculates the net force on every pair of bodies and
+	 * returns the array of forces of each associated body. The index of the forces
+	 * matches the index of its associated body. */
 	public Point2D.Double[] calculateForces()
 	{
 		double distance, magnitude;
 		Point2D.Double direction;
 
 		Point2D.Double[] forces = new Point2D.Double[nBodies];
-		
+
 		for (int i = 0; i < nBodies; i++)
 		{
 			forces[i] = new Point2D.Double();
@@ -90,9 +91,9 @@ public class Space extends Observable
 				// calculate values of the forces for x and y components, and add them to the
 				// net forces
 				double ix = (forces[i].getX() + (magnitude * direction.getX()) / distance);
-				double jx = (forces[j].getX() + (-magnitude * direction.getX()) / distance); // j has negative magnitude
+				double jx = (forces[j].getX() + (magnitude * -direction.getX()) / distance); // j is opposite direction
 				double iy = (forces[i].getY() + (magnitude * direction.getY()) / distance);
-				double jy = (forces[j].getY() + (-magnitude * direction.getY()) / distance); // j has negative magnitude
+				double jy = (forces[j].getY() + (magnitude * -direction.getY()) / distance); // j is opposite direction
 
 				// set the net force to be the net calculated just previously
 				forces[i].setLocation(ix, iy);
@@ -111,21 +112,21 @@ public class Space extends Observable
 
 		for (int i = 0; i < nBodies; i++)
 		{
-			// Velocity = (Force / Mass) * timestep. This is just F = ma derived for
-			// velocity
+			// Velocity = (Force / Mass) * timestep. This is F = ma derived for velocity
 			deltaV = new Point2D.Double(((forces[i].getX() / bodies[i].getMass()) * timestep),
 					(forces[i].getY() / bodies[i].getMass() * timestep));
 
 			deltaP = new Point2D.Double(((bodies[i].getVelocity().getX() + deltaV.getX() / 2) * timestep),
 					((bodies[i].getVelocity().getY() + deltaV.getY() / 2) * timestep));
 
-			double newX = (bodies[i].getVelocity().getX() * deltaV.getX());
-			double newY = (bodies[i].getVelocity().getX() * deltaV.getX());
-			bodies[i].getVelocity().setLocation(newX, newY);
+			double newX = (bodies[i].getVelocity().getX() + deltaV.getX());
+			double newY = (bodies[i].getVelocity().getY() + deltaV.getY());
+			bodies[i].setVelocity(new Point2D.Double(newX, newY));
 
 			newX = (bodies[i].getXPos() + deltaP.getX());
 			newY = (bodies[i].getYPos() + deltaP.getY());
 			bodies[i].setPosition(new Point2D.Double(newX, newY));
+			System.out.println();
 		}
 	}
 
