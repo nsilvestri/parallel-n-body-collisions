@@ -28,6 +28,11 @@ public class Body
 		position.y += velocity.getY();
 	}
 	
+	public void setPosition(Point2D.Double newPos)
+	{
+		position = newPos;
+	}
+	
 	/* getPosition() returns the Point2D.Double that stores this body's
 	 * position.
 	 */
