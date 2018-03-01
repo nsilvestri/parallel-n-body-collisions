@@ -9,8 +9,7 @@ import java.util.Observable;
 public class Space extends Observable
 {
 	private final static double G = .667; // gravitational constant
-	private final static double timestep = .001;
-
+	private final static double timestep = .5;
 	private Body[] bodies;
 	private int nBodies;
 
@@ -59,7 +58,7 @@ public class Space extends Observable
 		
 		for (Body b : bodies)
 		{
-			b.move();
+			b.move(timestep);
 		}
 		
 		setChangedAndNotifyObservers();
@@ -123,7 +122,7 @@ public class Space extends Observable
 		{
 			// Velocity = (Force / Mass) * timestep. This is F = ma derived for velocity
 			deltaV = new Point2D.Double(((forces[i].getX() / bodies[i].getMass()) * timestep),
-					(forces[i].getY() / bodies[i].getMass() * timestep));
+					(forces[i].getY() / bodies[i].getMass()) * timestep);
 
 			deltaP = new Point2D.Double(((bodies[i].getVelocity().getX() + deltaV.getX() / 2) * timestep),
 					((bodies[i].getVelocity().getY() + deltaV.getY() / 2) * timestep));
@@ -131,7 +130,7 @@ public class Space extends Observable
 			bodies[i].changeVelocityBy(deltaV);
 			// bodies[i].setVelocity(new Point2D.Double(newX, newY));
 
-			//newX = (bodies[i].getXPos() + deltaP.getX());
+			// newX = (bodies[i].getXPos() + deltaP.getX());
 			// newY = (bodies[i].getYPos() + deltaP.getY());
 			// bodies[i].setPosition(new Point2D.Double(newX, newY));
 		}

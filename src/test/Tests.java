@@ -14,7 +14,7 @@ public class Tests
 	{
 		Body b = new Body(0, 0, 0, 0, 0, 0);
 		
-		b.move();
+		b.move(1);
 		
 		assertEquals(0.0, b.getPosition().getX());
 		assertEquals(0.0, b.getPosition().getY());
@@ -25,7 +25,7 @@ public class Tests
 	{
 		Body b = new Body(0, 0, 0, 0, 10, 0);
 		
-		b.move();
+		b.move(1);
 		
 		assertEquals(10.0, b.getPosition().getX());
 		assertEquals(0.0, b.getPosition().getY());
@@ -36,7 +36,7 @@ public class Tests
 	{
 		Body b = new Body(0, 0, 0, 0, 0, 10);
 		
-		b.move();
+		b.move(1);
 		
 		assertEquals(0.0, b.getPosition().getX());
 		assertEquals(10.0, b.getPosition().getY());
@@ -47,7 +47,7 @@ public class Tests
 	{
 		Body b = new Body(0, 0, 0, 0, 10, 10);
 		
-		b.move();
+		b.move(1);
 		
 		assertEquals(10.0, b.getPosition().getX());
 		assertEquals(10.0, b.getPosition().getY());
@@ -58,7 +58,7 @@ public class Tests
 	{
 		Body b = new Body(0, 0, 0, 0, -10, 0);
 		
-		b.move();
+		b.move(1);
 		
 		assertEquals(-10.0, b.getPosition().getX());
 		assertEquals(0.0, b.getPosition().getY());
@@ -69,7 +69,7 @@ public class Tests
 	{
 		Body b = new Body(0, 0, 0, 0, 0, -10);
 		
-		b.move();
+		b.move(1);
 		
 		assertEquals(0.0, b.getPosition().getX());
 		assertEquals(-10.0, b.getPosition().getY());
@@ -80,7 +80,7 @@ public class Tests
 	{
 		Body b = new Body(0, 0, 0, 0, -10, -10);
 		
-		b.move();
+		b.move(1);
 		
 		assertEquals(-10.0, b.getPosition().getX());
 		assertEquals(-10.0, b.getPosition().getY());

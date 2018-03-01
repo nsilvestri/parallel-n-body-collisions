@@ -22,10 +22,10 @@ public class Body
 
 	/* move() changes this body's position based on its velocity. If its velocity
 	 * needed to be changed, it should be done before this method is called. */
-	public void move()
+	public void move(double timestep)
 	{
-		position.x += velocity.getX();
-		position.y += velocity.getY();
+		position.x += velocity.getX() * timestep;
+		position.y += velocity.getY() * timestep;
 	}
 
 	/* setPosition() this body's position to the given position. */
