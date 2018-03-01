@@ -40,11 +40,13 @@ public class Body
 		velocity = newVelocity;
 	}
 
-	/* changeVelocityBy() adds the components of the given velocity vector to the
-	 * current velocity vector. */
-	public void changeVelocityBy(Point2D.Double deltaVelocity)
+	/* changeVelocityBy() adds the components of the given velocity vector scaled by
+	 * timestep to the current velocity vector. */
+	public void changeVelocityBy(Point2D.Double deltaVelocity, double timestep)
 	{
-		velocity.setLocation(velocity.getX() + deltaVelocity.getX(), velocity.getY() + deltaVelocity.getY());
+		double newVX = velocity.getX() + (deltaVelocity.getX() * timestep);
+		double newVY = velocity.getY() + (deltaVelocity.getY() * timestep);
+		velocity.setLocation(newVX, newVY);
 	}
 
 	/* getPosition() returns the Point2D.Double that stores this body's position. */
@@ -83,7 +85,8 @@ public class Body
 		return position.getY();
 	}
 
-	/* toString() returns a String representation of this Body, as Body[xPos, yPos] */
+	/* toString() returns a String representation of this Body, as Body[xPos,
+	 * yPos] */
 	public String toString()
 	{
 		return "Body[" + position.getX() + ", " + position.getY() + "]";

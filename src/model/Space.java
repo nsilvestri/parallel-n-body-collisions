@@ -8,8 +8,8 @@ import java.util.Observable;
  * inhabit the space. */
 public class Space extends Observable
 {
-	private final static double G = .667; // gravitational constant
-	private final static double timestep = .5;
+	private final static double G = 6.67e-1; // gravitational constant, currently 10^10 times bigger than real life
+	private final static double timestep = .1; // how quickly and accurately the simulation runs
 	private Body[] bodies;
 	private int nBodies;
 
@@ -33,12 +33,6 @@ public class Space extends Observable
 		this.bodies = bodies;
 	}
 
-	/* This constructor does nothing just for quick initialization. */
-	public Space()
-	{
-
-	}
-
 	/* setChangedAndNotifyObservers() calls setChanged() and notifyObservers(). */
 	public void setChangedAndNotifyObservers()
 	{
@@ -52,15 +46,16 @@ public class Space extends Observable
 	public void moveBodies()
 	{
 		Point2D.Double[] forces = calculateForces();
-		
-		// currently this just adjusts the velocity for every body, and then each body moves with the following for loop
-		moveBodiesByForce(forces);
-		
+
+		// currently this just adjusts the velocity for every body, and then each body
+		// moves with the following for loop
+		updateVelocitiesByForce(forces);
+
 		for (Body b : bodies)
 		{
 			b.move(timestep);
 		}
-		
+
 		setChangedAndNotifyObservers();
 	}
 
@@ -112,22 +107,24 @@ public class Space extends Observable
 		return forces;
 	}
 
-	// calculate new velocity/position for every body
-	public void moveBodiesByForce(Point2D.Double[] forces)
+	/* updateVelocitiesByForce() uses the given Point2D.Double[] of forces to update
+	 * the velocity of every Body in bodies. The velocities are updated with a call
+	 * to changeVelocityBy() and are scaled by the timestep. */
+	public void updateVelocitiesByForce(Point2D.Double[] forces)
 	{
-		Point2D.Double deltaV; // dv = f/m * dt
-		Point2D.Double deltaP; // dp = (v + dv/2) * DT
+		Point2D.Double deltaV; // dv = f/m, dv = a
+		Point2D.Double deltaP; // dp = (v + dv/2)
 
 		for (int i = 0; i < nBodies; i++)
 		{
 			// Velocity = (Force / Mass) * timestep. This is F = ma derived for velocity
-			deltaV = new Point2D.Double(((forces[i].getX() / bodies[i].getMass()) * timestep),
-					(forces[i].getY() / bodies[i].getMass()) * timestep);
+			deltaV = new Point2D.Double(forces[i].getX() / bodies[i].getMass(), forces[i].getY() / bodies[i].getMass());
 
-			deltaP = new Point2D.Double(((bodies[i].getVelocity().getX() + deltaV.getX() / 2) * timestep),
-					((bodies[i].getVelocity().getY() + deltaV.getY() / 2) * timestep));
+			deltaP = new Point2D.Double(((bodies[i].getVelocity().getX() + deltaV.getX()) / 2),
+					((bodies[i].getVelocity().getY() + deltaV.getY()) / 2));
 
-			bodies[i].changeVelocityBy(deltaV);
+			bodies[i].changeVelocityBy(deltaV, timestep);
+			
 			// bodies[i].setVelocity(new Point2D.Double(newX, newY));
 
 			// newX = (bodies[i].getXPos() + deltaP.getX());
