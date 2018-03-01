@@ -4,8 +4,11 @@ import java.util.Observer;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import model.Body;
@@ -34,6 +37,10 @@ public class Main extends Application
 	private Space space;
 
 	private Observer currentView;
+	
+	//when 0, animation is continuous
+	//when 1, animation is controlled by us
+	private static int stepByStepControl = 1;
 
 	@Override
 	public void start(Stage stage) throws Exception
@@ -52,6 +59,13 @@ public class Main extends Application
 		bodies[3] = new Body(5e4, 2, 100, 300, 0, 8);
 		space = new Space(bodies);
 		
+		
+		//2 bodies on collision course towards each other
+		Body[] bodies2 = new Body[2];
+		bodies2[0] = new Body(20, 20, 400, 300, -10, 0);
+		bodies2[1] = new Body(20, 20, 100, 300, 10, 0);
+		//space = new Space(bodies2);
+		
 		/* intialize observer */
 		
 		// window width and height in CanvasView constructor means the canvas
@@ -59,25 +73,44 @@ public class Main extends Application
 		currentView = new CanvasView(space, WINDOW_WIDTH, WINDOW_HEIGHT);
 		space.addObserver(currentView);
 		window.setCenter((Node) currentView);
-		
-		/* Animation Timer */
-		
-		// the AnimationTimer moves the bodies and updates the observers of space 60 times per second
-		new AnimationTimer()
-		{
-			@Override
-			public void handle(long currentNanoTime)
-			{
-				space.moveBodies();
-				space.setChangedAndNotifyObservers();
-			}
-			
-		}.start();
-
+				
 		/* finish up the stage */
 		space.setChangedAndNotifyObservers();
 		Scene scene = new Scene(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 		stage.setScene(scene);
 		stage.show();
+		
+		/* Animation Timer */
+		if (stepByStepControl == 0) {
+			// the AnimationTimer moves the bodies and updates the observers of space 60 times per second
+			new AnimationTimer()
+			{
+				@Override
+				public void handle(long currentNanoTime)
+				{
+					space.moveBodies();
+					space.setChangedAndNotifyObservers();
+				}
+				
+			}.start();
+		}
+		/* Pressing spacebar moves bodies */
+		else {
+			scene.setOnKeyPressed(new SpaceKeyListener());
+		}
+	}
+	
+	//When the SPACEbar (hahahahaha) is pressed, move bodies and update
+	private class SpaceKeyListener implements EventHandler<KeyEvent> {
+
+		@Override
+		public void handle(KeyEvent key) {
+			// TODO Auto-generated method stub
+			if (key.getCode() == KeyCode.SPACE) {
+				space.moveBodies();
+				space.setChangedAndNotifyObservers();
+			}
+		}
+		
 	}
 }
