@@ -2,14 +2,15 @@ package model;
 
 import java.awt.geom.Point2D;
 import java.util.Observable;
+import java.util.concurrent.ThreadLocalRandom;
 
 /* Space represents the 2D space that all objects exist within. This class is
  * the core class within the model, and contains the list of objects that
  * inhabit the space. */
 public class Space extends Observable
 {
-	private final static double G = 6.67e-1; // gravitational constant, currently 10^10 times bigger than real life
-	private final static double timestep = .1; // how quickly and accurately the simulation runs
+	private final static double G = 6.67e-3; // gravitational constant, currently 10^10 times bigger than real life
+	private final static double timestep = .001; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
 
@@ -22,7 +23,13 @@ public class Space extends Observable
 
 		for (int i = 0; i < nBodies; i++)
 		{
-			// TODO: construct bodies with probably-random positions and velocities
+			double randX = ThreadLocalRandom.current().nextDouble(100, 500);
+			double randY = ThreadLocalRandom.current().nextDouble(100, 500);
+			double randVX = ThreadLocalRandom.current().nextDouble(-8, 8);
+			double randVY = ThreadLocalRandom.current().nextDouble(-8, 8);
+
+			bodies[i] = new Body(mass, radius, randX, randY, randVX, randVY);
+
 		}
 	}
 
@@ -31,6 +38,25 @@ public class Space extends Observable
 	{
 		this.nBodies = bodies.length;
 		this.bodies = bodies;
+	}
+
+	public Space()
+	{
+		nBodies = ThreadLocalRandom.current().nextInt(2, 10);
+
+		bodies = new Body[nBodies];
+
+		for (int i = 0; i < nBodies; i++)
+		{
+			double randRadius = ThreadLocalRandom.current().nextDouble(2, 50);
+			double randMass = ThreadLocalRandom.current().nextDouble(1e1, 1e5);
+			double randX = ThreadLocalRandom.current().nextDouble(0, 600);
+			double randY = ThreadLocalRandom.current().nextDouble(0, 600);
+			double randVX = ThreadLocalRandom.current().nextDouble(-15, 15);
+			double randVY = ThreadLocalRandom.current().nextDouble(-15, 15);
+
+			bodies[i] = new Body(randMass, randRadius, randX, randY, randVX, randVY);
+		}
 	}
 
 	/* setChangedAndNotifyObservers() calls setChanged() and notifyObservers(). */
@@ -45,16 +71,19 @@ public class Space extends Observable
 	 * take collisions into account. */
 	public void moveBodies()
 	{
+		// get the gravitational forces acting on every body
 		Point2D.Double[] forces = calculateForces();
 
-		// currently this just adjusts the velocity for every body, and then each body
-		// moves with the following for loop
+		// adjust the velocity for every body
 		updateVelocitiesByForce(forces);
 
+		// move each body according to its new velocity
 		for (Body b : bodies)
 		{
 			b.move(timestep);
 		}
+
+		checkCollisions();
 
 		setChangedAndNotifyObservers();
 	}
@@ -124,12 +153,60 @@ public class Space extends Observable
 					((bodies[i].getVelocity().getY() + deltaV.getY()) / 2));
 
 			bodies[i].changeVelocityBy(deltaV, timestep);
-			
-			// bodies[i].setVelocity(new Point2D.Double(newX, newY));
+		}
+	}
 
-			// newX = (bodies[i].getXPos() + deltaP.getX());
-			// newY = (bodies[i].getYPos() + deltaP.getY());
-			// bodies[i].setPosition(new Point2D.Double(newX, newY));
+	public void checkCollisions()
+	{
+		// check bodies for collisions and adjust only collided bodies accordingly
+
+		for (int i = 0; i < bodies.length - 1; i++)
+		{
+			for (int j = i + 1; j < bodies.length; j++)
+			{
+				Body b1 = bodies[i];
+				Body b2 = bodies[j];
+
+				// if the distance between the bodies is less than the sum of their radii,
+				// they've collided
+				if (b1.getPosition().distance(b2.getPosition()) < (b1.getRadius() + b2.getRadius()))
+				{
+					double v1ix = b1.getVelocity().getX(); // initial x-velocity of body 1
+					double v1iy = b1.getVelocity().getY(); // initial y-velocity of body 1
+					double x1i = b1.getXPos(); // initial x-pos of body 1
+					double y1i = b1.getYPos(); // initial y-pos of body 1
+					
+					double v2ix = b2.getVelocity().getX(); // initial x-velocity of body 2
+					double v2iy = b2.getVelocity().getY(); // initial y-velocity of body 2
+					double x2i = b2.getXPos(); // initial x-pos of body 2
+					double y2i = b2.getYPos(); // initial y-pos of body 2
+					
+					// these equations calculate a new position for body 1
+					double blackNumeratorA = v2ix * Math.pow(x2i - x1i, 2) + v2iy * (x2i - x1i) * (y2i - y1i);
+					double redNumeratorA = v1ix * Math.pow(y2i - y1i, 2) - v1iy * (x2i - x1i) * (y2i - y1i);
+					double denominatorA = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
+					double v1fx = (blackNumeratorA + redNumeratorA) / denominatorA;
+					
+					double blackNumeratorB = v2ix * (x2i - x1i) * (y2i - y1i) + v2iy * Math.pow(y2i - y1i, 2);
+					double redNumeratorB = v1ix * (y2i - y1i) * (x2i - x1i) + v1iy * Math.pow(x2i - x1i, 2);
+					double denominatorB = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
+					double v1fy = (blackNumeratorB - redNumeratorB) / denominatorB;
+					
+					b1.setVelocity(new Point2D.Double(v1fx, v1fy));
+					
+					double blackNumeratorC = v1ix * Math.pow(x2i - x1i, 2) + v1iy * (x2i - x1i) * (y2i - y1i);
+					double redNumeratorC = v2ix * Math.pow(y2i - y1i, 2) - v2iy * (x2i - x1i) * (y2i - y1i);
+					double denominatorC = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
+					double v2fx = (blackNumeratorC + redNumeratorC) / denominatorC;
+					
+					double blackNumeratorD = v1ix * (x2i - x1i) * (y2i - y1i) + v1iy * Math.pow(y2i - y1i, 2);
+					double redNumeratorD = v2ix * (y2i - y1i) * (x2i - x1i) + v2iy * Math.pow(x2i - x1i, 2);
+					double denominatorD = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
+					double v2fy = (blackNumeratorD - redNumeratorD) / denominatorD;
+					
+					b2.setVelocity(new Point2D.Double(v2fx, v2fy));
+				}
+			}
 		}
 	}
 

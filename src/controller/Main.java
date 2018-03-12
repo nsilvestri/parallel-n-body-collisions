@@ -33,14 +33,16 @@ public class Main extends Application
 
 	private static final int WINDOW_WIDTH = 600;
 	private static final int WINDOW_HEIGHT = 600;
+	
+	private static final int ANIMATION_SPEED = 50; // scales the speed of the animation. 1 is 1x, 2 is 2x, etc
 
 	private Space space;
 
 	private Observer currentView;
 
-	// when 0, animation is continuous
-	// when 1, animation is controlled by us
-	private static int stepByStepControl = 0;
+	// when false, animation is continuous
+	// when true, animation is controlled by the user
+	private static boolean stepByStepControl = false;
 
 	@Override
 	public void start(Stage stage) throws Exception
@@ -51,19 +53,14 @@ public class Main extends Application
 
 		/* Intialize Model */
 
-		// hard coded test array
-		Body[] bodies = new Body[2];
-		bodies[0] = new Body(2e4, 20, 300, 300, 0, 0);
-		bodies[1] = new Body(2e2, 20, 100, 300, 0, 8.167);
-		// bodies[2] = new Body(20e4, 6, 300, 450, 9, 0);
-		// bodies[3] = new Body(5e4, 2, 100, 300, 0, 8);
+		// hard coded bodies
+		Body[] bodies = new Body[5];
+		bodies[0] = new Body(2e6, 20, 300, 300, 0, 0);
+		bodies[1] = new Body(2e4, 5, 400, 300, 0, -8.719);
+		bodies[2] = new Body(2e2, 2, 500, 400, 4, 2);
+		bodies[3] = new Body(3e4, 5.5, 200, 300, 0, 8.719);
+		bodies[4] = new Body(3e5, 10, 100, 100, 5, 5);
 		space = new Space(bodies);
-
-		// 2 bodies on collision course towards each other
-		Body[] bodies2 = new Body[2];
-		bodies2[0] = new Body(20, 20, 400, 300, -10, 0);
-		bodies2[1] = new Body(20, 20, 100, 300, 10, 0);
-		// space = new Space(bodies2);
 
 		/* intialize observer */
 
@@ -80,7 +77,7 @@ public class Main extends Application
 		stage.show();
 
 		/* Animation Timer */
-		if (stepByStepControl == 0)
+		if (!stepByStepControl)
 		{
 			// the AnimationTimer moves the bodies and updates the observers of space 60
 			// times per second
@@ -89,7 +86,10 @@ public class Main extends Application
 				@Override
 				public void handle(long currentNanoTime)
 				{
-					space.moveBodies();
+					for (int i = 0; i < ANIMATION_SPEED; i++)
+					{
+						space.moveBodies();						
+					}
 					space.setChangedAndNotifyObservers();
 				}
 
