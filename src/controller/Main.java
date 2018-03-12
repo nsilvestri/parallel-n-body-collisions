@@ -54,13 +54,7 @@ public class Main extends Application
 		/* Intialize Model */
 
 		// hard coded bodies
-		Body[] bodies = new Body[5];
-		bodies[0] = new Body(2e6, 20, 300, 300, 0, 0);
-		bodies[1] = new Body(2e4, 5, 400, 300, 0, -8.719);
-		bodies[2] = new Body(2e2, 2, 500, 400, 4, 2);
-		bodies[3] = new Body(3e4, 5.5, 200, 300, 0, 8.719);
-		bodies[4] = new Body(3e5, 10, 100, 100, 5, 5);
-		space = new Space(bodies);
+		space = new Space(10, 2e5, 10);
 
 		/* intialize observer */
 
