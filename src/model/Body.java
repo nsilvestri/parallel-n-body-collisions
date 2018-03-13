@@ -12,6 +12,7 @@ public class Body
 	private Point2D.Double position;
 	private Point2D.Double velocity;
 
+	/* Creates a new body with the given properties. */
 	public Body(double mass, double radius, double x, double y, double vx, double vy)
 	{
 		this.mass = mass;
@@ -90,6 +91,5 @@ public class Body
 	public String toString()
 	{
 		return "Body[" + position.getX() + ", " + position.getY() + "]";
-
 	}
 }

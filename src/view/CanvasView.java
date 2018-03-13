@@ -14,28 +14,28 @@ import model.Space;
 public class CanvasView extends BorderPane implements Observer
 {
 	private Space space;
-	
+
 	private Canvas canvas;
 	private GraphicsContext gc;
-	
+
 	public CanvasView(Space space, int width, int height)
 	{
 		this.space = space;
-		
+
 		canvas = new Canvas(width, height);
 		gc = canvas.getGraphicsContext2D();
-		
+
 		this.setCenter(canvas);
 	}
-	
-	/* update() is called whenever the observed Space object calls notifyObservers(). In this implementation, this
-	 * happens to be 60 times per second, because of the AnimationTimer in Main.java.
-	 */
+
+	/* update() is called whenever the observed Space object calls
+	 * notifyObservers(). In this implementation, this happens to be 60 times per
+	 * second, because of the AnimationTimer in Main.java. */
 	@Override
 	public void update(Observable o, Object arg)
 	{
 		space = (Space) o;
-		
+
 		gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight()); // reset the canvas
 		gc.setStroke(Color.BLACK);
 		// draw each body
@@ -44,7 +44,7 @@ public class CanvasView extends BorderPane implements Observer
 			// x and y coord need to be offset from the center to the corner in
 			// order to be drawn with strokeOval().
 			double xCorner = b.getXPos() - b.getRadius();
-			double yCorner = b.getYPos() - b.getRadius(); 
+			double yCorner = b.getYPos() - b.getRadius();
 			double width = b.getRadius() * 2;
 			double height = b.getRadius() * 2;
 			gc.strokeOval(xCorner, yCorner, width, height);

@@ -9,7 +9,7 @@ import java.util.concurrent.ThreadLocalRandom;
  * inhabit the space. */
 public class Space extends Observable
 {
-	private final static double G = 6.67e-3; // gravitational constant, currently 10^10 times bigger than real life
+	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
 	private final static double timestep = .001; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
@@ -23,6 +23,7 @@ public class Space extends Observable
 
 		for (int i = 0; i < nBodies; i++)
 		{
+			// generates random positions and velocityes for bodies
 			double randX = ThreadLocalRandom.current().nextDouble(100, 500);
 			double randY = ThreadLocalRandom.current().nextDouble(100, 500);
 			double randVX = ThreadLocalRandom.current().nextDouble(-8, 8);
@@ -40,22 +41,24 @@ public class Space extends Observable
 		this.bodies = bodies;
 	}
 
-	public Space()
+	/**
+	 * This constructor creates nBodies bodies of random mass and size. The mass is
+	 * the cube of the radius.
+	 */
+	public Space(int nBodies)
 	{
-		nBodies = ThreadLocalRandom.current().nextInt(2, 10);
-
 		bodies = new Body[nBodies];
 
 		for (int i = 0; i < nBodies; i++)
 		{
 			double randRadius = ThreadLocalRandom.current().nextDouble(2, 50);
-			double randMass = ThreadLocalRandom.current().nextDouble(1e1, 1e5);
+			double mass = Math.pow(randRadius, 3);
 			double randX = ThreadLocalRandom.current().nextDouble(0, 600);
 			double randY = ThreadLocalRandom.current().nextDouble(0, 600);
 			double randVX = ThreadLocalRandom.current().nextDouble(-15, 15);
 			double randVY = ThreadLocalRandom.current().nextDouble(-15, 15);
 
-			bodies[i] = new Body(randMass, randRadius, randX, randY, randVX, randVY);
+			bodies[i] = new Body(mass, randRadius, randX, randY, randVX, randVY);
 		}
 	}
 
@@ -83,8 +86,10 @@ public class Space extends Observable
 			b.move(timestep);
 		}
 
+		// check for collisions between any bodies
 		checkCollisions();
 
+		// last step is to notify observers of the new state
 		setChangedAndNotifyObservers();
 	}
 
@@ -156,6 +161,12 @@ public class Space extends Observable
 		}
 	}
 
+	/**
+	 * checkCollisions() checks if any two bodies in bodies are close enough to have
+	 * collided; i.e. the distance from their centers is less than the sum of their
+	 * radii. If two bodies are found to be collided, their velocities will be
+	 * updated accordingly using each body's setVelocity() method.
+	 */
 	public void checkCollisions()
 	{
 		// check bodies for collisions and adjust only collided bodies accordingly
@@ -175,35 +186,41 @@ public class Space extends Observable
 					double v1iy = b1.getVelocity().getY(); // initial y-velocity of body 1
 					double x1i = b1.getXPos(); // initial x-pos of body 1
 					double y1i = b1.getYPos(); // initial y-pos of body 1
-					
+
 					double v2ix = b2.getVelocity().getX(); // initial x-velocity of body 2
 					double v2iy = b2.getVelocity().getY(); // initial y-velocity of body 2
 					double x2i = b2.getXPos(); // initial x-pos of body 2
 					double y2i = b2.getYPos(); // initial y-pos of body 2
-					
-					// these equations calculate a new position for body 1
+
+					/* blackNumerator, redNumerator, and denominator are variables that correspond
+					 * the the portion of the associated letter equation they represent in the
+					 * assignment files.*/
+
+					// these equations calculate a new velocity for body 1
 					double blackNumeratorA = v2ix * Math.pow(x2i - x1i, 2) + v2iy * (x2i - x1i) * (y2i - y1i);
 					double redNumeratorA = v1ix * Math.pow(y2i - y1i, 2) - v1iy * (x2i - x1i) * (y2i - y1i);
 					double denominatorA = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
 					double v1fx = (blackNumeratorA + redNumeratorA) / denominatorA;
-					
+
 					double blackNumeratorB = v2ix * (x2i - x1i) * (y2i - y1i) + v2iy * Math.pow(y2i - y1i, 2);
 					double redNumeratorB = v1ix * (y2i - y1i) * (x2i - x1i) + v1iy * Math.pow(x2i - x1i, 2);
 					double denominatorB = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
 					double v1fy = (blackNumeratorB - redNumeratorB) / denominatorB;
-					
-					b1.setVelocity(new Point2D.Double(v1fx, v1fy));
-					
+
+					b1.setVelocity(new Point2D.Double(v1fx, v1fy)); // update b1 velocity
+
+					// these equations calculate a new velocity for body 2
+
 					double blackNumeratorC = v1ix * Math.pow(x2i - x1i, 2) + v1iy * (x2i - x1i) * (y2i - y1i);
 					double redNumeratorC = v2ix * Math.pow(y2i - y1i, 2) - v2iy * (x2i - x1i) * (y2i - y1i);
 					double denominatorC = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
 					double v2fx = (blackNumeratorC + redNumeratorC) / denominatorC;
-					
+
 					double blackNumeratorD = v1ix * (x2i - x1i) * (y2i - y1i) + v1iy * Math.pow(y2i - y1i, 2);
 					double redNumeratorD = v2ix * (y2i - y1i) * (x2i - x1i) + v2iy * Math.pow(x2i - x1i, 2);
 					double denominatorD = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
 					double v2fy = (blackNumeratorD - redNumeratorD) / denominatorD;
-					
+
 					b2.setVelocity(new Point2D.Double(v2fx, v2fy));
 				}
 			}

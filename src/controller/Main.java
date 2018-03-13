@@ -53,8 +53,7 @@ public class Main extends Application
 
 		/* Intialize Model */
 
-		// hard coded bodies
-		space = new Space(10, 2e5, 10);
+		space = new Space(15);
 
 		/* intialize observer */
 
@@ -80,6 +79,7 @@ public class Main extends Application
 				@Override
 				public void handle(long currentNanoTime)
 				{
+					// perform ANIMATION_SPEED steps before updating the current frame
 					for (int i = 0; i < ANIMATION_SPEED; i++)
 					{
 						space.moveBodies();						
@@ -103,7 +103,6 @@ public class Main extends Application
 		@Override
 		public void handle(KeyEvent key)
 		{
-			// TODO Auto-generated method stub
 			if (key.getCode() == KeyCode.SPACE)
 			{
 				space.moveBodies();
