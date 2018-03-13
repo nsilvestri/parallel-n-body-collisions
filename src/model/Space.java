@@ -147,15 +147,11 @@ public class Space extends Observable
 	public void updateVelocitiesByForce(Point2D.Double[] forces)
 	{
 		Point2D.Double deltaV; // dv = f/m, dv = a
-		Point2D.Double deltaP; // dp = (v + dv/2)
 
 		for (int i = 0; i < nBodies; i++)
 		{
 			// Velocity = (Force / Mass) * timestep. This is F = ma derived for velocity
 			deltaV = new Point2D.Double(forces[i].getX() / bodies[i].getMass(), forces[i].getY() / bodies[i].getMass());
-
-			deltaP = new Point2D.Double(((bodies[i].getVelocity().getX() + deltaV.getX()) / 2),
-					((bodies[i].getVelocity().getY() + deltaV.getY()) / 2));
 
 			bodies[i].changeVelocityBy(deltaV, timestep);
 		}
