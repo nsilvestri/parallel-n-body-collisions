@@ -2,19 +2,25 @@ package model;
 
 import java.awt.geom.Point2D;
 import java.util.Observable;
+import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 /* Space represents the 2D space that all objects exist within. This class is
  * the core class within the model, and contains the list of objects that
  * inhabit the space. */
-public class Space extends Observable
+public class Space extends Observable implements Runnable
 {
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
 	private final static double timestep = .1; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
-	private final int BORDER_WIDTH = 600;
-	private final int BORDER_HEIGHT =600;
+	private final int BORDER_WIDTH = 600; //width constraint that bodies should stay in
+	private final int BORDER_HEIGHT =600; //height constraint that bodies should stay in
+	private long numTimesteps;
+	
+	public void setNumTimesteps(long n) {
+		numTimesteps = n;
+	}
 
 	/* This constructor will be a random constructor of bodies with the given
 	 * properties. */
@@ -32,7 +38,6 @@ public class Space extends Observable
 			double randVY = ThreadLocalRandom.current().nextDouble(-8, 8);
 
 			bodies[i] = new Body(mass, radius, randX, randY, randVX, randVY);
-
 		}
 	}
 
@@ -61,6 +66,9 @@ public class Space extends Observable
 			double randVY = ThreadLocalRandom.current().nextDouble(-15, 15);
 
 			bodies[i] = new Body(mass, randRadius, randX, randY, randVX, randVY);
+			
+			//This line here to easier save scenarios (prints out the randomly generated parameters)
+			//System.out.println("new Body(" + mass + ", " + randRadius + ", " + randX + ", " + randY  + ", " + randVX + ", " + randVY + ")");
 		}
 	}
 
@@ -105,7 +113,7 @@ public class Space extends Observable
 
 		Point2D.Double[] forces = new Point2D.Double[nBodies];
 
-		// intialize Point2D.Double objects in array
+		// initialize Point2D.Double objects in array
 		for (int i = 0; i < nBodies; i++)
 		{
 			forces[i] = new Point2D.Double();
@@ -178,8 +186,12 @@ public class Space extends Observable
 
 				// if the distance between the bodies is less than the sum of their radii,
 				// they've collided
-				if (b1.getPosition().distance(b2.getPosition()) < (b1.getRadius() + b2.getRadius()))
+				if (b1.getPosition().distance(b2.getPosition()) < (b1.getRadius() + b2.getRadius()) &&
+					!b1.getCollisions().contains(b2) )
 				{
+					//add collision to list
+					b1.addCollision(b2);
+					
 					double v1ix = b1.getVelocity().getX(); // initial x-velocity of body 1
 					double v1iy = b1.getVelocity().getY(); // initial y-velocity of body 1
 					double x1i = b1.getXPos(); // initial x-pos of body 1
@@ -224,6 +236,8 @@ public class Space extends Observable
 				
 				
 			}
+			
+			//Check collisions on border
 			Body b1 = bodies[i];
 			if ((b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()))) {
 				Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
@@ -233,6 +247,7 @@ public class Space extends Observable
 				Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
 				b1.setVelocity(newVel);
 			}
+			b1.resetCollisions();
 		}
 		
 		
@@ -243,6 +258,22 @@ public class Space extends Observable
 	public Body[] getBodies()
 	{
 		return bodies;
+	}
+
+	@Override
+	public void run() {
+		for (int i = 0; i < numTimesteps; i++) {
+			moveBodies();
+			setChangedAndNotifyObservers();
+			try {
+				Thread.sleep(2);
+			} catch (InterruptedException e) {
+				System.out.println("Problem sleeping");
+				e.printStackTrace();
+			}
+		}
+		System.out.println("I have stopped");
+		return;
 	}
 	
 }

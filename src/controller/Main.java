@@ -51,12 +51,26 @@ public class Main extends Application
 		stage.setTitle("n-Body Collisions");
 		window = new BorderPane();
 
-		/* Intialize Model */
+		/* Initialize Model */
 
-		Body[] b = {new Body(2e6, 100, 120, 200, -2, 0)};
+		Body[] array = 
+		{new Body(25388.441286344863, 29.390840964489193, 448.9467795643991, 564.5256188402906, -9.291226629287745, -6.7910985178494006),
+		new Body(187.05890681361907, 5.7190794606209305, 560.2787346228214, 554.6582250802596, -6.620672415580502, 2.482329560612527),
+		new Body(11467.14417820409, 22.55027059732616, 442.126881645475, 437.32199775139327, -5.017058998361533, -12.143126544126945),
+		new Body(348.84174578094377, 7.03951627092418, 533.1709300693376, 253.36976522346126, -1.073590481525681, 1.8662525049244323),
+		new Body(39364.607674990024, 34.017467286285886, 265.19624294561584, 40.4990576995452, -11.32506249147888, 7.914679504073565),
+		new Body(2390.2772048938787, 13.370554644426129, 69.10206141819627, 19.72765613216687, -1.4227619587879783, -8.238036887458327),
+		new Body(84736.41202364455, 43.922800584843884, 185.80587961282615, 311.99644955987344, -7.19690127613096, -8.20265328376879),
+		new Body(36895.79379853321, 33.29090638331068, 408.6185796661888, 312.0772879068162, -9.030191563134974, -12.937019779130122),
+		new Body(419.7934102355361, 7.487644309346576, 550.5450315452638, 15.422124159358741, 0.473104024527343, 1.8473554825013672),
+		new Body(22115.946501668193, 28.06953233286172, 328.1435961310157, 259.27366348952455, 10.833319076798809, -3.469452207277472)};
 		space = new Space(10);
+		
+		long numTimesteps = 1000000L;
 
-		/* intialize observer */
+		space.setNumTimesteps(numTimesteps); //higher this is, longer it runs
+
+		/* initialize observer */
 
 		// window width and height in CanvasView constructor means the canvas
 		// will always be the full size of the intial window size.
@@ -70,7 +84,23 @@ public class Main extends Application
 		stage.setScene(scene);
 		stage.show();
 
+		//start timer
+		long startTime = System.nanoTime();
+		
+		//Thread s = new Thread(space);
+		//s.start();
+	
+		//s.join();
+		
+		
+		//end timer
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime);
+		System.out.println("Time is " + duration/1000000000 + " seconds, " + duration/1000 + " microseconds");
+		
+		//-----------------------------------------------------------------------------------
 		/* Animation Timer */
+		
 		if (!stepByStepControl)
 		{
 			// the AnimationTimer moves the bodies and updates the observers of space 60
@@ -90,12 +120,16 @@ public class Main extends Application
 
 			}.start();
 		}
+		
 		/* Pressing spacebar moves bodies */
+		/*
 		else
 		{
 			scene.setOnKeyPressed(new SpaceKeyListener());
 			
 		}
+		*/
+		//-------------------------------------------------------------------------------------------
 	}
 
 	// When the SPACEbar (hahahahaha) is pressed, move bodies and update

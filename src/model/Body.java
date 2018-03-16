@@ -1,6 +1,7 @@
 package model;
 
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
 /* Body is the objects that inhabit Space and orbit around each other. They have
  * mass, radius, position, velocity
@@ -10,7 +11,11 @@ public class Body
 	private double mass;
 	private double radius;
 	private Point2D.Double position;
+	private Point2D.Double oldPosition;
 	private Point2D.Double velocity;
+	private Point2D.Double oldVelocity;
+	private ArrayList<Body> currCollisions;
+	private ArrayList<Body> prevCollisions;
 
 	/* Creates a new body with the given properties. */
 	public Body(double mass, double radius, double x, double y, double vx, double vy)
@@ -19,12 +24,31 @@ public class Body
 		this.radius = radius;
 		position = new Point2D.Double(x, y);
 		velocity = new Point2D.Double(vx, vy);
+		currCollisions = new ArrayList<Body>();
+		prevCollisions = new ArrayList<Body>();
+		oldPosition = position;
+		oldVelocity = velocity;
+	}
+	
+	public void addCollision(Body b) {
+		currCollisions.add(b);
+	}
+	
+	public ArrayList<Body> getCollisions() {
+		return currCollisions;
+	}
+	
+	public void resetCollisions() {
+		prevCollisions = currCollisions;
+		currCollisions = new ArrayList<>();
 	}
 
 	/* move() changes this body's position based on its velocity. If its velocity
 	 * needed to be changed, it should be done before this method is called. */
 	public void move(double timestep)
 	{
+		oldPosition.x = position.x;
+		oldPosition.y = position.y;
 		position.x += velocity.getX() * timestep;
 		position.y += velocity.getY() * timestep;
 	}
@@ -32,12 +56,14 @@ public class Body
 	/* setPosition() this body's position to the given position. */
 	public void setPosition(Point2D.Double newPos)
 	{
+		oldPosition = position;
 		position = newPos;
 	}
 
 	/* setPosition() this body's position to the given position. */
 	public void setVelocity(Point2D.Double newVelocity)
 	{
+		oldVelocity = velocity;
 		velocity = newVelocity;
 	}
 
@@ -47,7 +73,20 @@ public class Body
 	{
 		double newVX = velocity.getX() + (deltaVelocity.getX() * timestep);
 		double newVY = velocity.getY() + (deltaVelocity.getY() * timestep);
+		oldVelocity = velocity;
 		velocity.setLocation(newVX, newVY);
+	}
+	
+	/* getPosition() returns the Point2D.Double that stores this body's position. */
+	public Point2D.Double getOldPosition()
+	{
+		return oldPosition;
+	}
+
+	/* getVelocity() returns the Point2D.Double that stores this body's velocity. */
+	public Point2D.Double getOldVelocity()
+	{
+		return oldVelocity;
 	}
 
 	/* getPosition() returns the Point2D.Double that stores this body's position. */
