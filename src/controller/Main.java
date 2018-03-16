@@ -34,7 +34,7 @@ public class Main extends Application
 	private static final int WINDOW_WIDTH = 600;
 	private static final int WINDOW_HEIGHT = 600;
 	
-	private static final int ANIMATION_SPEED = 50; // scales the speed of the animation. 1 is 1x, 2 is 2x, etc
+	private static final int ANIMATION_SPEED = 1; // scales the speed of the animation. 1 is 1x, 2 is 2x, etc
 
 	private Space space;
 
@@ -53,7 +53,8 @@ public class Main extends Application
 
 		/* Intialize Model */
 
-		space = new Space(15);
+		Body[] b = {new Body(2e6, 100, 120, 200, -2, 0)};
+		space = new Space(10);
 
 		/* intialize observer */
 
@@ -93,6 +94,7 @@ public class Main extends Application
 		else
 		{
 			scene.setOnKeyPressed(new SpaceKeyListener());
+			
 		}
 	}
 
@@ -107,6 +109,7 @@ public class Main extends Application
 			{
 				space.moveBodies();
 				space.setChangedAndNotifyObservers();
+				System.out.println(space.getBodies()[0].toString());
 			}
 		}
 

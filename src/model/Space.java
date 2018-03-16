@@ -10,9 +10,11 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Space extends Observable
 {
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
-	private final static double timestep = .001; // tickrate of simulation, can be interpreted as units in "seconds"
+	private final static double timestep = .1; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
+	private final int BORDER_WIDTH = 600;
+	private final int BORDER_HEIGHT =600;
 
 	/* This constructor will be a random constructor of bodies with the given
 	 * properties. */
@@ -23,9 +25,9 @@ public class Space extends Observable
 
 		for (int i = 0; i < nBodies; i++)
 		{
-			// generates random positions and velocityes for bodies
-			double randX = ThreadLocalRandom.current().nextDouble(100, 500);
-			double randY = ThreadLocalRandom.current().nextDouble(100, 500);
+			// generates random positions and velocities for bodies
+			double randX = ThreadLocalRandom.current().nextDouble(radius, BORDER_WIDTH - radius);
+			double randY = ThreadLocalRandom.current().nextDouble(radius, BORDER_HEIGHT - radius);
 			double randVX = ThreadLocalRandom.current().nextDouble(-8, 8);
 			double randVY = ThreadLocalRandom.current().nextDouble(-8, 8);
 
@@ -53,8 +55,8 @@ public class Space extends Observable
 		{
 			double randRadius = ThreadLocalRandom.current().nextDouble(2, 50);
 			double mass = Math.pow(randRadius, 3);
-			double randX = ThreadLocalRandom.current().nextDouble(0, 600);
-			double randY = ThreadLocalRandom.current().nextDouble(0, 600);
+			double randX = ThreadLocalRandom.current().nextDouble(randRadius, BORDER_WIDTH - randRadius);
+			double randY = ThreadLocalRandom.current().nextDouble(randRadius, BORDER_HEIGHT - randRadius);
 			double randVX = ThreadLocalRandom.current().nextDouble(-15, 15);
 			double randVY = ThreadLocalRandom.current().nextDouble(-15, 15);
 
@@ -219,8 +221,22 @@ public class Space extends Observable
 
 					b2.setVelocity(new Point2D.Double(v2fx, v2fy));
 				}
+				
+				
+			}
+			Body b1 = bodies[i];
+			if ((b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()))) {
+				Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
+				b1.setVelocity(newVel);
+			}
+			if ((b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()))) {
+				Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
+				b1.setVelocity(newVel);
 			}
 		}
+		
+		
+		
 	}
 
 	/* getBodies() returns the array containing the bodies. */
@@ -228,4 +244,5 @@ public class Space extends Observable
 	{
 		return bodies;
 	}
+	
 }
