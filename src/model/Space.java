@@ -10,7 +10,8 @@ import javafx.scene.canvas.GraphicsContext;
 /* Space represents the 2D space that all objects exist within. This class is
  * the core class within the model, and contains the list of objects that
  * inhabit the space. */
-public class Space extends Observable implements Runnable
+//public class Space extends Observable implements Runnable
+public class Space extends Thread
 {
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
 	private final static double timestep = .1 ; // tickrate of simulation, can be interpreted as units in "seconds"
@@ -25,15 +26,15 @@ public class Space extends Observable implements Runnable
 	private final static boolean borderOn = false;
 	
 	private GraphicsContext gc;
-	private int canvasWidth;
-	private int canvasHeight;
+	private double canvasWidth;
+	private double canvasHeight;
 	private Canvas canvas;
 	
-	public void setGC(GraphicsContext gc, int w, int h) {
-		canvas = new Canvas(w, h);
-		this.gc = canvas.getGraphicsContext2D();
-		canvasWidth = w;
-		canvasHeight = h;
+	public void setCanvas(Canvas c) {
+		canvas = c;
+		gc = canvas.getGraphicsContext2D();
+		canvasWidth = c.getWidth();
+		canvasHeight = c.getHeight();
 	}
 	
 	public Canvas getCanvas() {
@@ -116,11 +117,12 @@ public class Space extends Observable implements Runnable
 	}
 
 	/* setChangedAndNotifyObservers() calls setChanged() and notifyObservers(). */
+	/*
 	public void setChangedAndNotifyObservers()
 	{
 		setChanged();
 		notifyObservers();
-	}
+	} */
 
 	/* moveBodies() first recalculates new vx and vy for every body, and then calls
 	 * each body's move() method to recalculate their new positions. It does not

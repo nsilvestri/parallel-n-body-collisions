@@ -7,6 +7,7 @@ import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
@@ -71,25 +72,29 @@ public class Main extends Application
 				new Body(10, 30, 60, 200, 1, 0),
 				};
 		
-		space = new Space(3000, 6, 5, true);
+		space = new Space(3000, 6, 5, false);
 		//space = new Space(1000, false);
 		//space = new Space(array1);
 		
 		long numTimesteps = 1500L; //higher this is, longer it runs
 
 		space.setNumTimesteps(numTimesteps);
+		
+		Canvas canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
+		space.setCanvas(canvas);
+		window.setCenter(space.getCanvas());
 
 		/* initialize observer */
 
 		// window width and height in CanvasView constructor means the canvas
 		// will always be the full size of the intial window size.
-		currentView = new CanvasView(space, WINDOW_WIDTH, WINDOW_HEIGHT);
-		space.addObserver(currentView);
+		//currentView = new CanvasView(space, WINDOW_WIDTH, WINDOW_HEIGHT);
+		//space.addObserver(currentView);
 		//window.setCenter((Node) currentView);
-		window.setCenter((Node) space.getCanvas());
+		//window.setCenter((Node) space.getCanvas());
 
 		/* finish up the stage */
-		space.setChangedAndNotifyObservers();
+		//space.setChangedAndNotifyObservers();
 		Scene scene = new Scene(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 		stage.setScene(scene);
 		stage.show();
@@ -97,8 +102,9 @@ public class Main extends Application
 		
 		
 		//Start the threads 
-		Thread s = new Thread(space);
-		s.start();
+		//Thread s = new Thread(space);
+		//s.start();
+		space.start();
 		
 		//s.join();
 		
@@ -146,7 +152,7 @@ public class Main extends Application
 			if (key.getCode() == KeyCode.SPACE)
 			{
 				space.moveBodies();
-				space.setChangedAndNotifyObservers();
+				//space.setChangedAndNotifyObservers();
 			}
 		}
 
