@@ -17,10 +17,14 @@ public class CanvasView extends BorderPane implements Observer
 
 	private Canvas canvas;
 	private GraphicsContext gc;
+	private int canvasWidth;
+	private int canvasHeight;
 
 	public CanvasView(Space space, int width, int height)
 	{
 		this.space = space;
+		this.canvasWidth = width;
+		this.canvasHeight = height;
 
 		canvas = new Canvas(width, height);
 		gc = canvas.getGraphicsContext2D();
@@ -38,6 +42,9 @@ public class CanvasView extends BorderPane implements Observer
 
 		gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight()); // reset the canvas
 		gc.setStroke(Color.BLACK);
+		
+		gc.strokeRect(0, 0, canvasWidth, canvasHeight);
+		
 		// draw each body
 		for (Body b : space.getBodies())
 		{

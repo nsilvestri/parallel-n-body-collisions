@@ -14,8 +14,15 @@ public class Body
 	private Point2D.Double oldPosition;
 	private Point2D.Double velocity;
 	private Point2D.Double oldVelocity;
+	private Point2D.Double oldForce;
+	private Point2D.Double newForce;
 	private ArrayList<Body> currCollisions;
 	private ArrayList<Body> prevCollisions;
+	private boolean prevXWallCollision;
+	private boolean prevYWallCollision;
+	private boolean currXWallCollision;
+	private boolean currYWallCollision;
+	
 
 	/* Creates a new body with the given properties. */
 	public Body(double mass, double radius, double x, double y, double vx, double vy)
@@ -24,23 +31,30 @@ public class Body
 		this.radius = radius;
 		position = new Point2D.Double(x, y);
 		velocity = new Point2D.Double(vx, vy);
+		oldForce = new Point2D.Double();
+		newForce = new Point2D.Double();
 		currCollisions = new ArrayList<Body>();
 		prevCollisions = new ArrayList<Body>();
 		oldPosition = position;
 		oldVelocity = velocity;
+		prevXWallCollision = false;
+		prevYWallCollision = false;
+		
 	}
 	
 	public void addCollision(Body b) {
 		currCollisions.add(b);
 	}
 	
-	public ArrayList<Body> getCollisions() {
-		return currCollisions;
+	public ArrayList<Body> getPrevCollisions() {
+		return prevCollisions;
 	}
 	
 	public void resetCollisions() {
 		prevCollisions = currCollisions;
 		currCollisions = new ArrayList<>();
+		prevXWallCollision = currXWallCollision;
+		prevYWallCollision = currYWallCollision;
 	}
 
 	/* move() changes this body's position based on its velocity. If its velocity
@@ -49,8 +63,20 @@ public class Body
 	{
 		oldPosition.x = position.x;
 		oldPosition.y = position.y;
+		oldVelocity.x = velocity.x;
+		oldVelocity.y = velocity.y;
 		position.x += velocity.getX() * timestep;
 		position.y += velocity.getY() * timestep;
+	}
+	
+	public void moveRewind(double timestep) {
+		position.x = oldPosition.x + velocity.getX() * timestep;
+		position.y = oldPosition.y + velocity.getY() * timestep;
+	}
+	
+	public void rewind() {
+		position = oldPosition;
+		velocity = oldVelocity;
 	}
 
 	/* setPosition() this body's position to the given position. */
@@ -59,12 +85,27 @@ public class Body
 		oldPosition = position;
 		position = newPos;
 	}
+	
+	public void setOldForce(Point2D.Double f) {
+		oldForce = newForce;
+		newForce = f;
+	}
+	
+	public Point2D.Double getOldForce() {
+		return oldForce;
+	}
 
 	/* setPosition() this body's position to the given position. */
 	public void setVelocity(Point2D.Double newVelocity)
 	{
 		oldVelocity = velocity;
 		velocity = newVelocity;
+	}
+	
+	public void changeOldVelocityBy(Point2D.Double deltaVelocity, double timestep) {
+		double newVX = oldVelocity.getX() + (deltaVelocity.getX() * timestep);
+		double newVY = oldVelocity.getY() + (deltaVelocity.getY() * timestep);
+		velocity.setLocation(newVX, newVY);
 	}
 
 	/* changeVelocityBy() adds the components of the given velocity vector scaled by
@@ -123,6 +164,31 @@ public class Body
 	public double getYPos()
 	{
 		return position.getY();
+	}
+	
+	public double getOldXPos() {
+		return oldPosition.getX();
+	}
+	
+	public double getOldYPos() {
+		return oldPosition.getY();
+	}
+
+	public boolean getPrevXWallCollision() {
+		return prevXWallCollision;
+	}
+
+
+	public boolean getPrevYWallCollision() {
+		return prevYWallCollision;
+	}
+
+	public void setCurrYWallCollision(boolean collision) {
+		this.prevYWallCollision = collision;
+	}
+	
+	public void setCurrXWallCollision(boolean collision) {
+		this.prevXWallCollision = collision;
 	}
 
 	/* toString() returns a String representation of this Body, as Body[xPos,

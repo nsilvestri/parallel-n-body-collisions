@@ -42,7 +42,7 @@ public class Main extends Application
 
 	// when false, animation is continuous
 	// when true, animation is controlled by the user
-	private static boolean stepByStepControl = false;
+	private static boolean stepByStepControl = true;
 
 	@Override
 	public void start(Stage stage) throws Exception
@@ -64,9 +64,17 @@ public class Main extends Application
 		new Body(36895.79379853321, 33.29090638331068, 408.6185796661888, 312.0772879068162, -9.030191563134974, -12.937019779130122),
 		new Body(419.7934102355361, 7.487644309346576, 550.5450315452638, 15.422124159358741, 0.473104024527343, 1.8473554825013672),
 		new Body(22115.946501668193, 28.06953233286172, 328.1435961310157, 259.27366348952455, 10.833319076798809, -3.469452207277472)};
-		space = new Space(10);
 		
-		long numTimesteps = 1000000L;
+		
+		Body[] array1 = {
+				new Body(10, 30, 120, 200, -1, 0),
+				new Body(10, 30, 60, 200, 1, 0),
+				};
+		
+		//space = new Space(8, 10, 30);
+		space = new Space(array1);
+		
+		long numTimesteps = 6000L;
 
 		space.setNumTimesteps(numTimesteps); //higher this is, longer it runs
 
@@ -87,6 +95,7 @@ public class Main extends Application
 		//start timer
 		long startTime = System.nanoTime();
 		
+		//Start the threads 
 		//Thread s = new Thread(space);
 		//s.start();
 	
@@ -113,7 +122,9 @@ public class Main extends Application
 					// perform ANIMATION_SPEED steps before updating the current frame
 					for (int i = 0; i < ANIMATION_SPEED; i++)
 					{
-						space.moveBodies();						
+						space.moveBodies();			
+						space.getBodies()[0].toString();
+						space.getBodies()[1].toString();
 					}
 					space.setChangedAndNotifyObservers();
 				}
@@ -122,13 +133,13 @@ public class Main extends Application
 		}
 		
 		/* Pressing spacebar moves bodies */
-		/*
+		
 		else
 		{
 			scene.setOnKeyPressed(new SpaceKeyListener());
 			
 		}
-		*/
+		
 		//-------------------------------------------------------------------------------------------
 	}
 
@@ -143,7 +154,6 @@ public class Main extends Application
 			{
 				space.moveBodies();
 				space.setChangedAndNotifyObservers();
-				System.out.println(space.getBodies()[0].toString());
 			}
 		}
 

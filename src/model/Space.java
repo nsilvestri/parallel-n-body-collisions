@@ -11,12 +11,14 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Space extends Observable implements Runnable
 {
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
-	private final static double timestep = .1; // tickrate of simulation, can be interpreted as units in "seconds"
+	private final static double timestep = 3 ; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
 	private final int BORDER_WIDTH = 600; //width constraint that bodies should stay in
 	private final int BORDER_HEIGHT =600; //height constraint that bodies should stay in
 	private long numTimesteps;
+	private final double overlapTolerance = 3;
+	private static int numCollisions = 0;
 	
 	public void setNumTimesteps(long n) {
 		numTimesteps = n;
@@ -68,7 +70,7 @@ public class Space extends Observable implements Runnable
 			bodies[i] = new Body(mass, randRadius, randX, randY, randVX, randVY);
 			
 			//This line here to easier save scenarios (prints out the randomly generated parameters)
-			//System.out.println("new Body(" + mass + ", " + randRadius + ", " + randX + ", " + randY  + ", " + randVX + ", " + randVY + ")");
+			System.out.println("new Body(" + mass + ", " + randRadius + ", " + randX + ", " + randY  + ", " + randVX + ", " + randVY + ")");
 		}
 	}
 
@@ -101,6 +103,89 @@ public class Space extends Observable implements Runnable
 
 		// last step is to notify observers of the new state
 		setChangedAndNotifyObservers();
+	}
+	
+	/* This method moves two bodies (b1, b2) by a fraction of a timestep (rewind). 
+	 * This is called when two bodies have overlapped more than an allowed tolerance.
+	 * <rewind> should be < 1. */
+	public void rewind(Body b1, Body b2, double rewind) {
+		//calculate forces
+		Point2D.Double[] forces = rewindCalculateForces(b1, b2);
+		
+		//Update velocities by force
+		Point2D.Double deltaV; // dv = f/m, dv = a
+		
+		// Velocity = (Force / Mass) * timestep. This is F = ma derived for velocity
+		//Update first body's velocity
+		deltaV = new Point2D.Double(b1.getOldForce().getX() / b1.getMass(), b1.getOldForce().getY() / b1.getMass());
+		b1.changeOldVelocityBy(deltaV, timestep * rewind);
+		
+		//Update second body's velocity
+		deltaV = new Point2D.Double(b2.getOldForce().getX()/ b2.getMass(), b2.getOldForce().getY() / b2.getMass());
+		b2.changeOldVelocityBy(deltaV, timestep * rewind);
+		
+		//move bodies
+		b1.moveRewind(timestep * rewind);
+		b2.moveRewind(timestep * rewind);
+		
+		setChangedAndNotifyObservers();
+	}
+	
+	public void rewind2(Body b1, Body b2, double rewind) {
+		b1.rewind();
+		b2.rewind();
+		
+		Point2D.Double[] forces = rewindCalculateForces(b1, b2);
+		
+		Point2D.Double deltaV;
+		
+		//update first body's velocity
+		deltaV = new Point2D.Double(forces[0].getX() / b1.getMass(), forces[0].getY() / b1.getMass());
+		b1.changeVelocityBy(deltaV,  timestep* rewind);
+		
+		//update second body's velocity
+		deltaV = new Point2D.Double(forces[1].getX() / b2.getMass(), forces[1].getY() / b2.getMass());
+		b2.changeVelocityBy(deltaV, timestep * rewind);
+		
+		b1.moveRewind(timestep * rewind);
+		b2.moveRewind(timestep * rewind);
+		System.out.println("B1 in rewind: " + b1.toString());
+	}
+	
+	//This method calculates the forces of bodies <b1> <b2>. using their old positions
+	//vs their new ones. 
+	public Point2D.Double[] rewindCalculateForces(Body b1, Body b2) {
+		double distance, magnitude;
+		Point2D.Double direction;
+
+		Point2D.Double[] forces = {new Point2D.Double(), new Point2D.Double()};
+
+		
+		// get the distance of the two bodies
+		double temp = (Math.pow((b1.getOldXPos() - b2.getOldXPos()), 2)
+				+ Math.pow((b1.getOldYPos() - b2.getOldYPos()), 2));
+
+		distance = Math.sqrt(temp);
+
+		// Force = (G * m1 * m2) / (distance^2)
+		magnitude = (G * b1.getMass() * b2.getMass()) / Math.pow(distance, 2);
+
+		// Direction is the vector of the difference between the two x and y positions
+		direction = new Point2D.Double((b2.getOldXPos() - b1.getOldXPos()),
+				(b2.getOldYPos() - b1.getOldYPos()));
+
+		// calculate values of the forces for x and y components, and add them to the
+		// net forces
+		double ix = (forces[0].getX() + (magnitude * direction.getX()) / distance);
+		double jx = (forces[1].getX() + (magnitude * -direction.getX()) / distance); // j is opposite direction
+		double iy = (forces[0].getY() + (magnitude * direction.getY()) / distance);
+		double jy = (forces[1].getY() + (magnitude * -direction.getY()) / distance); // j is opposite direction
+
+		// set the net force to be the net calculated just previously
+		forces[0].setLocation(ix, iy);
+		forces[1].setLocation(jx, jy);
+
+		return forces;
 	}
 
 	/* calculateForces() calculates the net force on every pair of bodies and
@@ -161,6 +246,7 @@ public class Space extends Observable implements Runnable
 		for (int i = 0; i < nBodies; i++)
 		{
 			// Velocity = (Force / Mass) * timestep. This is F = ma derived for velocity
+			bodies[i].setOldForce(forces[i]);
 			deltaV = new Point2D.Double(forces[i].getX() / bodies[i].getMass(), forces[i].getY() / bodies[i].getMass());
 
 			bodies[i].changeVelocityBy(deltaV, timestep);
@@ -183,13 +269,35 @@ public class Space extends Observable implements Runnable
 			{
 				Body b1 = bodies[i];
 				Body b2 = bodies[j];
-
+				System.out.println("B1: " + b1.toString());
 				// if the distance between the bodies is less than the sum of their radii,
-				// they've collided
-				if (b1.getPosition().distance(b2.getPosition()) < (b1.getRadius() + b2.getRadius()) &&
-					!b1.getCollisions().contains(b2) )
+				// they've collided. Don't count collisions that have happened on last timestep
+				if ((b1.getPosition().distance(b2.getPosition()) < (b1.getRadius() + b2.getRadius())) &&
+					!b1.getPrevCollisions().contains(b2) )
 				{
-					//add collision to list
+					numCollisions++;
+					System.out.println("Num collisions: " + numCollisions);
+					//check within tolerance. If it's over the allowed tolerance, rewind until they're not
+					double overlap = (b1.getRadius() + b2.getRadius()) - b1.getPosition().distance(b2.getPosition());
+					System.out.println("Overlap is " + overlap);
+					
+					if (overlap > overlapTolerance ) {
+						//TODO: fix rewind value
+						System.out.println("Overlap BR: " + overlap); //overlap before rewind. Testing purposes
+						System.out.println("B1 BR: " + b1.toString());
+						System.out.println("B2 AR: " + b2.toString());
+						double rewind = (overlapTolerance / overlap); //needs to be fixed I think
+						System.out.println("Rewind is " + rewind); //testing purposes
+						rewind(b1, b2, rewind);
+						
+						//testing purposes
+						overlap = (b1.getRadius() + b2.getRadius()) - b1.getPosition().distance(b2.getPosition());
+						System.out.println("Overlap AR: " + overlap); //overlap after rewind
+						System.out.println("B1 AR: " + b1.toString());
+						System.out.println("B2 AR: " + b2.toString());
+					}
+					
+					//add collision to list so we don't include it on the next timestep
 					b1.addCollision(b2);
 					
 					double v1ix = b1.getVelocity().getX(); // initial x-velocity of body 1
@@ -239,18 +347,41 @@ public class Space extends Observable implements Runnable
 			
 			//Check collisions on border
 			Body b1 = bodies[i];
-			if ((b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()))) {
+			//Check two vertical walls
+			if (b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && 
+					!b1.getPrevXWallCollision()) {
+				 
 				Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
 				b1.setVelocity(newVel);
+				b1.setCurrXWallCollision(true);
 			}
-			if ((b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()))) {
+			//Check two horizontal walls
+			if (b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()) &&
+					!b1.getPrevYWallCollision()) {
 				Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
 				b1.setVelocity(newVel);
+				b1.setCurrYWallCollision(true);
 			}
 			b1.resetCollisions();
 		}
 		
-		
+		//check border collisions on last one that gets missed in for loop
+		//Check collisions on border
+		Body b1 = bodies[bodies.length - 1];
+		if (b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && 
+				!b1.getPrevXWallCollision()) {
+			 
+			Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
+			b1.setVelocity(newVel);
+			b1.setCurrXWallCollision(true);
+		}
+		if (b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()) &&
+				!b1.getPrevYWallCollision()) {
+			Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
+			b1.setVelocity(newVel);
+			b1.setCurrYWallCollision(true);
+		}
+		b1.resetCollisions();
 		
 	}
 
@@ -265,15 +396,19 @@ public class Space extends Observable implements Runnable
 		for (int i = 0; i < numTimesteps; i++) {
 			moveBodies();
 			setChangedAndNotifyObservers();
+			
 			try {
-				Thread.sleep(2);
+				Thread.sleep(5);
 			} catch (InterruptedException e) {
 				System.out.println("Problem sleeping");
 				e.printStackTrace();
 			}
+			
+			if (i % 100 == 0) System.out.println(i);
 		}
+		
 		System.out.println("I have stopped");
-		return;
+		//return;
 	}
 	
 }
