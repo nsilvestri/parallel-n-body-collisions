@@ -71,10 +71,11 @@ public class Main extends Application
 				new Body(10, 30, 60, 200, 1, 0),
 				};
 		
-		space = new Space(10);
+		space = new Space(3000, 6, 5, true);
+		//space = new Space(1000, false);
 		//space = new Space(array1);
 		
-		long numTimesteps = 2000000L; //higher this is, longer it runs
+		long numTimesteps = 1500L; //higher this is, longer it runs
 
 		space.setNumTimesteps(numTimesteps);
 
@@ -84,7 +85,8 @@ public class Main extends Application
 		// will always be the full size of the intial window size.
 		currentView = new CanvasView(space, WINDOW_WIDTH, WINDOW_HEIGHT);
 		space.addObserver(currentView);
-		window.setCenter((Node) currentView);
+		//window.setCenter((Node) currentView);
+		window.setCenter((Node) space.getCanvas());
 
 		/* finish up the stage */
 		space.setChangedAndNotifyObservers();
@@ -126,7 +128,7 @@ public class Main extends Application
 
 			}.start();
 		}
-		*/
+		
 		/* Pressing spacebar moves bodies */
 		
 		//else	scene.setOnKeyPressed(new SpaceKeyListener());		

@@ -2,8 +2,10 @@ package model;
 
 import java.awt.geom.Point2D;
 import java.util.Observable;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
+
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 
 /* Space represents the 2D space that all objects exist within. This class is
  * the core class within the model, and contains the list of objects that
@@ -11,15 +13,32 @@ import java.util.concurrent.ThreadLocalRandom;
 public class Space extends Observable implements Runnable
 {
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
-	private final static double timestep = .5 ; // tickrate of simulation, can be interpreted as units in "seconds"
+	private final static double timestep = .1 ; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
-	private final int BORDER_WIDTH = 2000; //width constraint that bodies should stay in
-	private final int BORDER_HEIGHT =2000; //height constraint that bodies should stay in
+	private final int BORDER_WIDTH = 3000; //width constraint that bodies should stay in
+	private final int BORDER_HEIGHT =3000; //height constraint that bodies should stay in
 	private long numTimesteps;
-	private final double overlapTolerance = 3;
+	private final double overlapTolerance = .3;
 	private static int numCollisions = 0;
 	private Point2D.Double[] forces;
+	private final static boolean borderOn = false;
+	
+	private GraphicsContext gc;
+	private int canvasWidth;
+	private int canvasHeight;
+	private Canvas canvas;
+	
+	public void setGC(GraphicsContext gc, int w, int h) {
+		canvas = new Canvas(w, h);
+		this.gc = canvas.getGraphicsContext2D();
+		canvasWidth = w;
+		canvasHeight = h;
+	}
+	
+	public Canvas getCanvas() {
+		return canvas;
+	}
 	
 	public void setNumTimesteps(long n) {
 		numTimesteps = n;
@@ -34,7 +53,7 @@ public class Space extends Observable implements Runnable
 
 	/* This constructor will be a random constructor of bodies with the given
 	 * properties. */
-	public Space(int nBodies, double mass, double radius)
+	public Space(int nBodies, double mass, double radius, boolean zeroVel)
 	{
 		this.nBodies = nBodies;
 		bodies = new Body[nBodies];
@@ -45,10 +64,13 @@ public class Space extends Observable implements Runnable
 			// generates random positions and velocities for bodies
 			double randX = ThreadLocalRandom.current().nextDouble(radius, BORDER_WIDTH - radius);
 			double randY = ThreadLocalRandom.current().nextDouble(radius, BORDER_HEIGHT - radius);
-			double randVX = ThreadLocalRandom.current().nextDouble(-8, 8);
-			double randVY = ThreadLocalRandom.current().nextDouble(-8, 8);
-
-			bodies[i] = new Body(mass, radius, randX, randY, randVX, randVY);
+			if (zeroVel) 
+				bodies[i] = new Body(mass, radius, randX, randY, 0, 0);
+			else {
+				double randVX = ThreadLocalRandom.current().nextDouble(-8, 8);
+				double randVY = ThreadLocalRandom.current().nextDouble(-8, 8);
+				bodies[i] = new Body(mass, radius, randX, randY, randVX, randVY);
+			}
 			forces[i] = new Point2D.Double();
 		}
 	}
@@ -65,7 +87,7 @@ public class Space extends Observable implements Runnable
 	 * This constructor creates nBodies bodies of random mass and size. The mass is
 	 * the cube of the radius.
 	 */
-	public Space(int nBodies)
+	public Space(int nBodies, boolean zeroVel)
 	{
 		bodies = new Body[nBodies];
 		forces = new Point2D.Double[nBodies];
@@ -76,14 +98,20 @@ public class Space extends Observable implements Runnable
 			double mass = Math.pow(randRadius, 3);
 			double randX = ThreadLocalRandom.current().nextDouble(randRadius, BORDER_WIDTH - randRadius);
 			double randY = ThreadLocalRandom.current().nextDouble(randRadius, BORDER_HEIGHT - randRadius);
-			double randVX = ThreadLocalRandom.current().nextDouble(-15, 15);
-			double randVY = ThreadLocalRandom.current().nextDouble(-15, 15);
-
-			bodies[i] = new Body(mass, randRadius, randX, randY, randVX, randVY);
+			double randVX = 0, randVY = 0;
+			if (zeroVel) 
+				bodies[i] = new Body(mass, randRadius, randX, randY, 0, 0);
+			else {
+				randVX = ThreadLocalRandom.current().nextDouble(-15, 15);
+				randVY = ThreadLocalRandom.current().nextDouble(-15, 15);
+	
+				bodies[i] = new Body(mass, randRadius, randX, randY, randVX, randVY);
+			}
+			
 			forces[i]= new Point2D.Double();
 			
 			//This line here to easier save scenarios (prints out the randomly generated parameters)
-			System.out.println("new Body(" + mass + ", " + randRadius + ", " + randX + ", " + randY  + ", " + randVX + ", " + randVY + ")");
+			//System.out.println("new Body(" + mass + ", " + randRadius + ", " + randX + ", " + randY  + ", " + randVX + ", " + randVY + ")");
 		}
 	}
 
@@ -104,18 +132,32 @@ public class Space extends Observable implements Runnable
 
 		// adjust the velocity for every body
 		updateVelocitiesByForce(forces);
+		
+		//testing
+		gc.clearRect(0, 0, canvasWidth, canvasHeight);
 
 		// move each body according to its new velocity
 		for (Body b : bodies)
 		{
 			b.move(timestep);
+			
+			//testing
+			double xCorner = b.getXPos() - b.getRadius();
+			double yCorner = b.getYPos() - b.getRadius();
+			double width = b.getRadius() * 2;
+			double height = b.getRadius() * 2;
+			gc.strokeOval(xCorner, yCorner, width, height);
+			
+			//testing
+			if (b.getOldPosition().equals(b.getPosition()))
+				System.out.println("Samesies");
 		}
 
 		// check for collisions between any bodies
 		checkCollisions();
 
 		// last step is to notify observers of the new state
-		setChangedAndNotifyObservers();
+		//setChangedAndNotifyObservers();
 	}
 	
 	/* This method moves two bodies <b1, b2> by a fraction of a timestep <rewind>. 
@@ -139,7 +181,7 @@ public class Space extends Observable implements Runnable
 		b1.moveRewind(timestep * rewind);
 		b2.moveRewind(timestep * rewind);
 		
-		setChangedAndNotifyObservers();
+		//setChangedAndNotifyObservers();
 	}
 
 	/* calculateForces() calculates the net force on every pair of bodies and
@@ -148,7 +190,8 @@ public class Space extends Observable implements Runnable
 	public Point2D.Double[] calculateForces()
 	{
 		double distance, magnitude;
-		Point2D.Double direction;
+		Point2D.Double direction = new Point2D.Double();
+		
 
 		for (int i = 0; i < nBodies - 1; i++)
 		{
@@ -163,7 +206,9 @@ public class Space extends Observable implements Runnable
 				magnitude = (G * bodies[i].getMass() * bodies[j].getMass()) / Math.pow(distance, 2);
 
 				// Direction is the vector of the difference between the two x and y positions
-				direction = new Point2D.Double((bodies[j].getXPos() - bodies[i].getXPos()),
+				//direction = new Point2D.Double((bodies[j].getXPos() - bodies[i].getXPos()),
+						//(bodies[j].getYPos() - bodies[i].getYPos()));
+				direction.setLocation((bodies[j].getXPos() - bodies[i].getXPos()),
 						(bodies[j].getYPos() - bodies[i].getYPos()));
 
 				// calculate values of the forces for x and y components, and add them to the
@@ -187,14 +232,14 @@ public class Space extends Observable implements Runnable
 	 * to changeVelocityBy() and are scaled by the timestep. */
 	public void updateVelocitiesByForce(Point2D.Double[] forces)
 	{
-		Point2D.Double deltaV; // dv = f/m, dv = a
+		Point2D.Double deltaV = new Point2D.Double(); // dv = f/m, dv = a
 
 		for (int i = 0; i < nBodies; i++)
 		{
 			// Velocity = (Force / Mass) * timestep. This is F = ma derived for velocity
 			bodies[i].setOldForce(forces[i]);
-			deltaV = new Point2D.Double(forces[i].getX() / bodies[i].getMass(), forces[i].getY() / bodies[i].getMass());
-
+			//deltaV = new Point2D.Double(forces[i].getX() / bodies[i].getMass(), forces[i].getY() / bodies[i].getMass());
+			deltaV.setLocation(forces[i].getX() / bodies[i].getMass(), forces[i].getY() / bodies[i].getMass());
 			bodies[i].changeVelocityBy(deltaV, timestep);
 		}
 	}
@@ -221,7 +266,7 @@ public class Space extends Observable implements Runnable
 					!b1.getPrevCollisions().contains(b2) )
 				{
 					numCollisions++;
-					System.out.println("Num collisions: " + numCollisions);
+					//System.out.println("Num collisions: " + numCollisions);
 					//check within tolerance. If it's over the allowed tolerance, rewind until they're not
 					double overlap = (b1.getRadius() + b2.getRadius()) - b1.getPosition().distance(b2.getPosition());
 					
@@ -279,24 +324,26 @@ public class Space extends Observable implements Runnable
 				
 				
 			}
+			Body b1 = bodies[i];
 			
 			//Check collisions on border
-			Body b1 = bodies[i];
-			//Check two vertical walls
-			if (b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && 
-					!b1.getPrevXWallCollision()) {
-				//switch x velocity
-				Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
-				b1.setVelocity(newVel);
-				b1.setCurrXWallCollision(true);
-			}
-			//Check two horizontal walls
-			if (b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()) &&
-					!b1.getPrevYWallCollision()) {
-				//switch y velocity
-				Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
-				b1.setVelocity(newVel);
-				b1.setCurrYWallCollision(true);
+			if (borderOn) {
+				//Check two vertical walls
+				if (b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && 
+						!b1.getPrevXWallCollision()) {
+					//switch x velocity
+					Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
+					b1.setVelocity(newVel);
+					b1.setCurrXWallCollision(true);
+				}
+				//Check two horizontal walls
+				if (b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()) &&
+						!b1.getPrevYWallCollision()) {
+					//switch y velocity
+					Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
+					b1.setVelocity(newVel);
+					b1.setCurrYWallCollision(true);
+				}
 			}
 			b1.resetCollisions();
 		}
@@ -304,18 +351,20 @@ public class Space extends Observable implements Runnable
 		//check border collisions on last one that gets missed in for loop
 		//Check collisions on border
 		Body b1 = bodies[bodies.length - 1];
-		if (b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && 
-				!b1.getPrevXWallCollision()) {
-			 
-			Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
-			b1.setVelocity(newVel);
-			b1.setCurrXWallCollision(true);
-		}
-		if (b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()) &&
-				!b1.getPrevYWallCollision()) {
-			Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
-			b1.setVelocity(newVel);
-			b1.setCurrYWallCollision(true);
+		if (borderOn) {
+			if (b1.getXPos() <= b1.getRadius() || b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && 
+					!b1.getPrevXWallCollision()) {
+				 
+				Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
+				b1.setVelocity(newVel);
+				b1.setCurrXWallCollision(true);
+			}
+			if (b1.getYPos() <= b1.getRadius() || b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()) &&
+					!b1.getPrevYWallCollision()) {
+				Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
+				b1.setVelocity(newVel);
+				b1.setCurrYWallCollision(true);
+			} 
 		}
 		b1.resetCollisions();
 		
@@ -334,7 +383,8 @@ public class Space extends Observable implements Runnable
 		
 		for (int i = 0; i < numTimesteps; i++) {
 			moveBodies();
-			setChangedAndNotifyObservers();
+			
+			//setChangedAndNotifyObservers();
 			
 			try {
 				Thread.sleep(5);
@@ -344,7 +394,7 @@ public class Space extends Observable implements Runnable
 			} 
 			
 			//For testing purposes, in practice comment this
-			if (i % 1000 == 0) System.out.println(i);
+			if (i % 100 == 0) System.out.println(i);
 		}
 		
 		System.out.println("I have stopped");

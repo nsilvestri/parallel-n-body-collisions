@@ -30,6 +30,8 @@ public class CanvasView extends BorderPane implements Observer
 		gc = canvas.getGraphicsContext2D();
 
 		this.setCenter(canvas);
+		
+		space.setGC(gc, canvasWidth, canvasHeight);
 	}
 
 	/* update() is called whenever the observed Space object calls
@@ -57,7 +59,6 @@ public class CanvasView extends BorderPane implements Observer
 			double height = b.getRadius() * 2;
 			gc.strokeOval(xCorner, yCorner, width, height);
 		}
-		
 		/*
 		for (int i = 0; i < space.getBodies().length; i++) {
 			gc.setFill(Color.rgb(0, 255/(i+1), 255/(i+1)));
