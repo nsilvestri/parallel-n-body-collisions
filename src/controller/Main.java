@@ -65,18 +65,18 @@ public class Main extends Application
 		new Body(419.7934102355361, 7.487644309346576, 550.5450315452638, 15.422124159358741, 0.473104024527343, 1.8473554825013672),
 		new Body(22115.946501668193, 28.06953233286172, 328.1435961310157, 259.27366348952455, 10.833319076798809, -3.469452207277472)};
 		
-		
+		//Two bodies that will overlap over allowed tolerance
 		Body[] array1 = {
 				new Body(10, 30, 120, 200, -1, 0),
 				new Body(10, 30, 60, 200, 1, 0),
 				};
 		
-		space = new Space(1600, 3, 30);
+		space = new Space(10);
 		//space = new Space(array1);
 		
-		long numTimesteps = 200L;
+		long numTimesteps = 2000000L; //higher this is, longer it runs
 
-		space.setNumTimesteps(numTimesteps); //higher this is, longer it runs
+		space.setNumTimesteps(numTimesteps);
 
 		/* initialize observer */
 
@@ -92,21 +92,15 @@ public class Main extends Application
 		stage.setScene(scene);
 		stage.show();
 
-		//start timer
-		long startTime = System.nanoTime();
+		
 		
 		//Start the threads 
 		Thread s = new Thread(space);
 		s.start();
-	
-		s.join();
+		
+		//s.join();
 		
 		
-		//end timer
-		long endTime = System.nanoTime();
-		long duration = (endTime - startTime);
-		System.out.println("Time is " + duration/1000000000 + " seconds, " + duration/1000 + " microseconds");
-		System.out.println("Detected collisions: " + space.getNumCollisions());
 		
 		//-----------------------------------------------------------------------------------
 		/* Animation Timer */

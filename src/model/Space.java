@@ -329,23 +329,32 @@ public class Space extends Observable implements Runnable
 
 	@Override
 	public void run() {
+		//start timer
+		long startTime = System.nanoTime();
+		
 		for (int i = 0; i < numTimesteps; i++) {
 			moveBodies();
-			//System.out.println(bodies[0].toString()); //testing
 			setChangedAndNotifyObservers();
 			
 			try {
-				Thread.sleep(10);
+				Thread.sleep(5);
 			} catch (InterruptedException e) {
 				System.out.println("Problem sleeping");
 				e.printStackTrace();
-			}
+			} 
 			
-			if (i % 100 == 0) System.out.println(i);
+			//For testing purposes, in practice comment this
+			if (i % 1000 == 0) System.out.println(i);
 		}
 		
 		System.out.println("I have stopped");
-		//return;
+		//end timer
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime);
+		System.out.println("Time is " + duration/1000000000 + " seconds, " + duration/1000 + " microseconds");
+		System.out.println("Detected collisions: " + numCollisions);
+		
+		return;
 	}
 	
 	public int getNumCollisions() {
