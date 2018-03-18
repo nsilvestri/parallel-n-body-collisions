@@ -35,8 +35,8 @@ public class Body
 		newForce = new Point2D.Double();
 		currCollisions = new ArrayList<Body>();
 		prevCollisions = new ArrayList<Body>();
-		oldPosition = position;
-		oldVelocity = velocity;
+		oldPosition = new Point2D.Double(position.getX(), position.getY());
+		oldVelocity = new Point2D.Double(velocity.getX(), velocity.getY());
 		prevXWallCollision = false;
 		prevYWallCollision = false;
 		
@@ -61,23 +61,20 @@ public class Body
 	 * needed to be changed, it should be done before this method is called. */
 	public void move(double timestep)
 	{
-		oldPosition.x = position.x;
-		oldPosition.y = position.y;
-		oldVelocity.x = velocity.x;
-		oldVelocity.y = velocity.y;
+		oldPosition.setLocation(position.getX(), position.getY());
+		oldVelocity.setLocation(velocity.getX(), velocity.getY());
 		position.x += velocity.getX() * timestep;
 		position.y += velocity.getY() * timestep;
 	}
 	
+	/*Similar to move, but uses oldPosition and oldVelocity. When this is
+	 *called, the timestep will be a fraction of what it is originally to
+	 *move the bodies in a smaller amount. */
 	public void moveRewind(double timestep) {
-		position.x = oldPosition.x + velocity.getX() * timestep;
-		position.y = oldPosition.y + velocity.getY() * timestep;
+		position.x = oldPosition.x + oldVelocity.getX() * timestep;
+		position.y = oldPosition.y + oldVelocity.getY() * timestep;
 	}
 	
-	public void rewind() {
-		position = oldPosition;
-		velocity = oldVelocity;
-	}
 
 	/* setPosition() this body's position to the given position. */
 	public void setPosition(Point2D.Double newPos)
@@ -102,11 +99,7 @@ public class Body
 		velocity = newVelocity;
 	}
 	
-	public void changeOldVelocityBy(Point2D.Double deltaVelocity, double timestep) {
-		double newVX = oldVelocity.getX() + (deltaVelocity.getX() * timestep);
-		double newVY = oldVelocity.getY() + (deltaVelocity.getY() * timestep);
-		velocity.setLocation(newVX, newVY);
-	}
+
 
 	/* changeVelocityBy() adds the components of the given velocity vector scaled by
 	 * timestep to the current velocity vector. */
@@ -114,7 +107,16 @@ public class Body
 	{
 		double newVX = velocity.getX() + (deltaVelocity.getX() * timestep);
 		double newVY = velocity.getY() + (deltaVelocity.getY() * timestep);
-		oldVelocity = velocity;
+		oldVelocity.setLocation(velocity.getX(), velocity.getY());;
+		velocity.setLocation(newVX, newVY);
+	}
+	
+	/* Similar to changeVelocityBy , but uses old value. When this method is called,
+	 * timestep will be a fraction of what it normally is to change the velocity in
+	 * a smaller amount. */
+	public void changeOldVelocityBy(Point2D.Double deltaVelocity, double timestep) {
+		double newVX = oldVelocity.getX() + (deltaVelocity.getX() * timestep);
+		double newVY = oldVelocity.getY() + (deltaVelocity.getY() * timestep);
 		velocity.setLocation(newVX, newVY);
 	}
 	

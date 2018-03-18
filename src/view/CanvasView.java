@@ -4,7 +4,7 @@ import java.util.Observable;
 import java.util.Observer;
 
 import javafx.scene.paint.Color;
-
+import javafx.scene.paint.Paint;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.layout.BorderPane;
@@ -46,6 +46,7 @@ public class CanvasView extends BorderPane implements Observer
 		gc.strokeRect(0, 0, canvasWidth, canvasHeight);
 		
 		// draw each body
+		
 		for (Body b : space.getBodies())
 		{
 			// x and y coord need to be offset from the center to the corner in
@@ -56,5 +57,16 @@ public class CanvasView extends BorderPane implements Observer
 			double height = b.getRadius() * 2;
 			gc.strokeOval(xCorner, yCorner, width, height);
 		}
+		
+		/*
+		for (int i = 0; i < space.getBodies().length; i++) {
+			gc.setFill(Color.rgb(0, 255/(i+1), 255/(i+1)));
+			Body b = space.getBodies()[i];
+			double xCorner = b.getXPos() - b.getRadius();
+			double yCorner = b.getYPos() - b.getRadius();
+			double width = b.getRadius() * 2;
+			double height = b.getRadius() * 2;
+			gc.fillOval(xCorner, yCorner, width, height);
+		} */
 	}
 }

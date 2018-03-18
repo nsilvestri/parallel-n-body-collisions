@@ -42,7 +42,7 @@ public class Main extends Application
 
 	// when false, animation is continuous
 	// when true, animation is controlled by the user
-	private static boolean stepByStepControl = true;
+	private static boolean stepByStepControl = false;
 
 	@Override
 	public void start(Stage stage) throws Exception
@@ -71,10 +71,10 @@ public class Main extends Application
 				new Body(10, 30, 60, 200, 1, 0),
 				};
 		
-		//space = new Space(8, 10, 30);
-		space = new Space(array1);
+		space = new Space(1600, 3, 30);
+		//space = new Space(array1);
 		
-		long numTimesteps = 6000L;
+		long numTimesteps = 200L;
 
 		space.setNumTimesteps(numTimesteps); //higher this is, longer it runs
 
@@ -96,20 +96,21 @@ public class Main extends Application
 		long startTime = System.nanoTime();
 		
 		//Start the threads 
-		//Thread s = new Thread(space);
-		//s.start();
+		Thread s = new Thread(space);
+		s.start();
 	
-		//s.join();
+		s.join();
 		
 		
 		//end timer
 		long endTime = System.nanoTime();
 		long duration = (endTime - startTime);
 		System.out.println("Time is " + duration/1000000000 + " seconds, " + duration/1000 + " microseconds");
+		System.out.println("Detected collisions: " + space.getNumCollisions());
 		
 		//-----------------------------------------------------------------------------------
 		/* Animation Timer */
-		
+		/*
 		if (!stepByStepControl)
 		{
 			// the AnimationTimer moves the bodies and updates the observers of space 60
@@ -131,14 +132,10 @@ public class Main extends Application
 
 			}.start();
 		}
-		
+		*/
 		/* Pressing spacebar moves bodies */
 		
-		else
-		{
-			scene.setOnKeyPressed(new SpaceKeyListener());
-			
-		}
+		//else	scene.setOnKeyPressed(new SpaceKeyListener());		
 		
 		//-------------------------------------------------------------------------------------------
 	}
