@@ -1,6 +1,7 @@
 package controller;
 
 import java.util.Observer;
+import java.util.concurrent.Semaphore;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
@@ -14,6 +15,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 import model.Body;
 import model.Space;
+import model.SpaceThread;
 import view.CanvasView;
 
 /* Main is the class that starts the application. This initializes the stage,
@@ -21,7 +23,7 @@ import view.CanvasView;
  * 
  */
 
-public class Main extends Application
+public class ParallelMain extends Application
 {
 	public static void main(String[] args)
 	{
@@ -37,9 +39,7 @@ public class Main extends Application
 	
 	private static final int ANIMATION_SPEED = 1; // scales the speed of the animation. 1 is 1x, 2 is 2x, etc
 
-	private Space space;
-
-	private Observer currentView;
+	private SpaceThread[] spaceThreads;
 
 	// when false, animation is continuous
 	// when true, animation is controlled by the user
@@ -72,26 +72,32 @@ public class Main extends Application
 				new Body(10, 30, 60, 200, 1, 0),
 				};
 		
-		space = new Space(3000, 3, 6, false);
-		//space = new Space(1000, false);
-		//space = new Space(array1);
+		Space setup = new Space(300, 3, 6, false);
 		
-		long numTimesteps =500L; //higher this is, longer it runs
-
-		space.setNumTimesteps(numTimesteps);
+		int numThreads = 8;
+		long numTimesteps = 500L; //higher this is, longer it runs
+		
+		//set up dissemination barrier for threads
+		int semSize = (int) Math.ceil(Math.log(numThreads) / Math.log(2)) ;
+		Semaphore[][] barrier = new Semaphore[semSize][numThreads];
+		for (int n = 0; n < semSize; n++) {
+			for (int i = 0; i < numThreads; i++) {
+				barrier[n][i] = new Semaphore(0);
+			}
+		}
 		
 		Canvas canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
-		space.setCanvas(canvas);
-		window.setCenter(space.getCanvas());
-
-		/* initialize observer */
-
-		// window width and height in CanvasView constructor means the canvas
-		// will always be the full size of the intial window size.
-		//currentView = new CanvasView(space, WINDOW_WIDTH, WINDOW_HEIGHT);
-		//space.addObserver(currentView);
-		//window.setCenter((Node) currentView);
-		//window.setCenter((Node) space.getCanvas());
+		
+		//initialize spacethreads
+		spaceThreads = new SpaceThread[numThreads];
+		for (int i = 0; i < numThreads; i++) {
+			spaceThreads[i] = new SpaceThread(setup.getBodies());
+			spaceThreads[i].setNumTimesteps(numTimesteps);
+			spaceThreads[i].setParallelmeters(i+1, numThreads, barrier);
+			spaceThreads[i].setCanvas(canvas);
+		}
+		
+		window.setCenter(canvas);
 
 		/* finish up the stage */
 		//space.setChangedAndNotifyObservers();
@@ -102,59 +108,12 @@ public class Main extends Application
 		
 		
 		//Start the threads 
-		//Thread s = new Thread(space);
-		//s.start();
-		space.start();
-		
-		//s.join();
-		
-		
-		
-		//-----------------------------------------------------------------------------------
-		/* Animation Timer */
-		/*
-		if (!stepByStepControl)
-		{
-			// the AnimationTimer moves the bodies and updates the observers of space 60
-			// times per second
-			new AnimationTimer()
-			{
-				@Override
-				public void handle(long currentNanoTime)
-				{
-					// perform ANIMATION_SPEED steps before updating the current frame
-					for (int i = 0; i < ANIMATION_SPEED; i++)
-					{
-						space.moveBodies();			
-						space.getBodies()[0].toString();
-						space.getBodies()[1].toString();
-					}
-					space.setChangedAndNotifyObservers();
-				}
-
-			}.start();
+		for (int i = 0; i < numThreads; i++) {
+			spaceThreads[i].start();
 		}
 		
-		/* Pressing spacebar moves bodies */
 		
-		//else	scene.setOnKeyPressed(new SpaceKeyListener());		
-		
-		//-------------------------------------------------------------------------------------------
 	}
 
-	// When the SPACEbar (hahahahaha) is pressed, move bodies and update
-	private class SpaceKeyListener implements EventHandler<KeyEvent>
-	{
-
-		@Override
-		public void handle(KeyEvent key)
-		{
-			if (key.getCode() == KeyCode.SPACE)
-			{
-				space.moveBodies();
-				//space.setChangedAndNotifyObservers();
-			}
-		}
-
-	}
+	
 }
