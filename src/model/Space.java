@@ -17,8 +17,8 @@ public class Space extends Thread
 	private final static double timestep = .1 ; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
-	private final int BORDER_WIDTH = 2000; //width constraint that bodies should stay in
-	private final int BORDER_HEIGHT =2000; //height constraint that bodies should stay in
+	private final int BORDER_WIDTH = 600; //width constraint that bodies should stay in
+	private final int BORDER_HEIGHT =600; //height constraint that bodies should stay in
 	private long numTimesteps;
 	private final double overlapTolerance = .3;
 	private static int numCollisions = 0;
@@ -73,6 +73,10 @@ public class Space extends Thread
 				bodies[i] = new Body(mass, radius, randX, randY, randVX, randVY);
 			}
 			forces[i] = new Point2D.Double();
+			
+			//This line here to easier save scenarios (prints out the randomly generated parameters)
+			System.out.println("new Body(" + mass + ", " + radius + ", " + randX + ", " + randY  + ", " + 
+			bodies[i].getVelocity().getX() + ", " + bodies[i].getVelocity().getX() + ")");
 		}
 	}
 

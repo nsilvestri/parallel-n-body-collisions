@@ -70,12 +70,15 @@ public class ParallelMain extends Application
 		Body[] array1 = {
 				new Body(10, 30, 120, 200, -1, 0),
 				new Body(10, 30, 60, 200, 1, 0),
+				new Body(10, 30, 200, 200, -1, 0),
+				new Body(10, 30, 400, 200, 1, 0)
 				};
 		
-		Space setup = new Space(300, 3, 6, false);
+		Space setup = new Space(8, 3, 10, false);
+		//Space setup = new Space(array);
 		
-		int numThreads = 8;
-		long numTimesteps = 500L; //higher this is, longer it runs
+		int numThreads = 2;
+		long numTimesteps = 50000L; //higher this is, longer it runs
 		
 		//set up dissemination barrier for threads
 		int semSize = (int) Math.ceil(Math.log(numThreads) / Math.log(2)) ;
@@ -93,7 +96,7 @@ public class ParallelMain extends Application
 		for (int i = 0; i < numThreads; i++) {
 			spaceThreads[i] = new SpaceThread(setup.getBodies());
 			spaceThreads[i].setNumTimesteps(numTimesteps);
-			spaceThreads[i].setParallelmeters(i+1, numThreads, barrier);
+			spaceThreads[i].setParallelmeters(i, numThreads, barrier);
 			spaceThreads[i].setCanvas(canvas);
 		}
 		

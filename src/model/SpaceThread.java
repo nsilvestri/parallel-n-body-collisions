@@ -6,20 +6,21 @@ import java.util.concurrent.ThreadLocalRandom;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.Color;
 
 public class SpaceThread extends Thread {
 
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
 	private final static double timestep = .1; // tickrate of simulation, can be interpreted as units in "seconds"
-	private Body[] bodies;
+	private static Body[] bodies;
 	private int nBodies;
-	private final int BORDER_WIDTH = 2000; // width constraint that bodies should stay in
-	private final int BORDER_HEIGHT = 2000; // height constraint that bodies should stay in
+	private final int BORDER_WIDTH = 600; // width constraint that bodies should stay in
+	private final int BORDER_HEIGHT = 600; // height constraint that bodies should stay in
 	private long numTimesteps;
 	private final double overlapTolerance = .3;
 	private static int numCollisions = 0;
 	private Point2D.Double[] forces;
-	private final static boolean borderOn = false;
+	private final static boolean borderOn = true;
 
 	private static GraphicsContext gc;
 	private double canvasWidth;
@@ -135,10 +136,9 @@ public class SpaceThread extends Thread {
 		Point2D.Double direction = new Point2D.Double();
 		Point2D.Double deltaV = new Point2D.Double();
 		
-		for (int i = id-1; i < nBodies - 1; i+= id) {
+		for (int i = id; i < nBodies - 1; i+= numThreads) {
 			for (int j = i+1; j < nBodies; j++) {
 				// get the distance of the two bodies
-				System.out.println("Id: " + id + " checking bodies " + i + " and " + j);
 				double temp = (Math.pow((bodies[i].getXPos() - bodies[j].getXPos()), 2)
 						+ Math.pow((bodies[i].getYPos() - bodies[j].getYPos()), 2));
 				distance = Math.sqrt(temp);
@@ -173,16 +173,12 @@ public class SpaceThread extends Thread {
 				
 				//move body
 				bodies[i].move(timestep);
-				// testing
-				double xCorner = bodies[i].getXPos() - bodies[i].getRadius();
-				double yCorner = bodies[i].getYPos() - bodies[i].getRadius();
-				double width = bodies[i].getRadius() * 2;
-				double height = bodies[i].getRadius() * 2;
 				
-				gc.strokeOval(xCorner, yCorner, width, height);
 				
 			}
 		}
+		if (id == 0)
+			bodies[nBodies-1].move(timestep);
 	}
 
 	/*
@@ -374,21 +370,34 @@ public class SpaceThread extends Thread {
 
 	@Override
 	//TODO: change this
+	
 	public void run() {
-		System.out.println("Process " + id + " running"); //testing
+		System.out.println("Process " + id + " running."); //testing
 		// start timer
 		long startTime = 0;
-		if (id == 1) {
+		if (id == 0) {
 			startTime = System.nanoTime();
 		}
 
 		for (int i = 0; i < numTimesteps; i++) {
 			calculateForcesAndUpdateVelocities(id);
 			dissBar();
-			if (id == 1) {
-				
-				
+			if (id == 0) {
+				// testing
 				checkCollisions();
+				gc.clearRect(0, 0, canvasWidth, canvasHeight);
+				for (int n = 0; n < nBodies; n++) {
+					double xCorner = bodies[n].getXPos() - bodies[n].getRadius();
+					double yCorner = bodies[n].getYPos() - bodies[n].getRadius();
+					double width = bodies[n].getRadius() * 2;
+					double height = bodies[n].getRadius() * 2;
+					
+					gc.setFill(Color.rgb(24, 255/(n+1), 255/(n+1)));
+					
+					gc.fillOval(xCorner, yCorner, width, height);
+				} 
+				
+				
 				
 				try {
 					Thread.sleep(5);
@@ -397,15 +406,15 @@ public class SpaceThread extends Thread {
 					e.printStackTrace();
 				} 
 				
-				gc.clearRect(0, 0, canvasWidth, canvasHeight);
+				
 			}
 			dissBar();
 
 			// For testing purposes, in practice comment this
-			if (id == 1 && i % 100 == 0)	System.out.println(i);
+			if (id == 0 && i % 100 == 0)	System.out.println(i);
 		}
 
-		if (id == 1) {
+		if (id == 0) {
 			System.out.println("I have stopped");
 			// end timer
 			long endTime = System.nanoTime();
@@ -416,6 +425,10 @@ public class SpaceThread extends Thread {
 
 		return;
 	}
+	/*
+	public void run() {
+		dissBar();
+	} */
 
 	public int getNumCollisions() {
 		return numCollisions;
@@ -426,11 +439,11 @@ public class SpaceThread extends Thread {
 
 		for (int n = 0; n < semSize; n++) {
 			// Calculate neighbor
-			int neighbor = Math.floorMod((int) Math.pow(2, n) + (id-1), numThreads);
+			int neighbor = Math.floorMod((int) Math.pow(2, n) + (id), numThreads);
 
 			dissBarrier[n][neighbor].release(); // let your neighbor know you've arrived
 			try {
-				dissBarrier[n][id-1].acquire(); // wait for your neighbor to arrive
+				dissBarrier[n][id].acquire(); // wait for your neighbor to arrive
 			} catch (InterruptedException e) {
 				System.out.println("Error acquiring neighbor");
 				e.printStackTrace();
