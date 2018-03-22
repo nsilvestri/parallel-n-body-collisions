@@ -74,11 +74,12 @@ public class ParallelMain extends Application
 				new Body(10, 30, 400, 200, 1, 0)
 				};
 		
-		Space setup = new Space(8, 3, 10, false);
-		//Space setup = new Space(array);
+		Space setup = new Space(2000, 3, 3, false); //testing comparison with sequential
+		//Space setup = new Space(10, 3, 16, false); //testing small amount of bodies
+		//Space setup = new Space(array1); //testing 4 bodies on parallel line
 		
-		int numThreads = 2;
-		long numTimesteps = 50000L; //higher this is, longer it runs
+		int numThreads = 40;
+		long numTimesteps = 1000L; //higher this is, longer it runs
 		
 		//set up dissemination barrier for threads
 		int semSize = (int) Math.ceil(Math.log(numThreads) / Math.log(2)) ;
@@ -100,7 +101,7 @@ public class ParallelMain extends Application
 			spaceThreads[i].setCanvas(canvas);
 		}
 		
-		window.setCenter(canvas);
+		window.setTop(canvas);
 
 		/* finish up the stage */
 		//space.setChangedAndNotifyObservers();

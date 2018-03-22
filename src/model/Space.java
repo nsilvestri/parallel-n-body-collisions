@@ -3,6 +3,7 @@ package model;
 import java.awt.geom.Point2D;
 import java.util.Observable;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -17,13 +18,15 @@ public class Space extends Thread
 	private final static double timestep = .1 ; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
-	private final int BORDER_WIDTH = 600; //width constraint that bodies should stay in
-	private final int BORDER_HEIGHT =600; //height constraint that bodies should stay in
+	private final int BORDER_WIDTH = 5000; //width constraint that bodies should stay in
+	private final int BORDER_HEIGHT =5000; //height constraint that bodies should stay in
 	private long numTimesteps;
 	private final double overlapTolerance = .3;
-	private static int numCollisions = 0;
 	private Point2D.Double[] forces;
-	private final static boolean borderOn = false;
+	private final static boolean borderOn = true;
+	private final static boolean graphicsOn = false;
+	
+	private static int numCollisions = 0;
 	
 	private GraphicsContext gc;
 	private double canvasWidth;
@@ -75,8 +78,8 @@ public class Space extends Thread
 			forces[i] = new Point2D.Double();
 			
 			//This line here to easier save scenarios (prints out the randomly generated parameters)
-			System.out.println("new Body(" + mass + ", " + radius + ", " + randX + ", " + randY  + ", " + 
-			bodies[i].getVelocity().getX() + ", " + bodies[i].getVelocity().getX() + ")");
+			//System.out.println("new Body(" + mass + ", " + radius + ", " + randX + ", " + randY  + ", " + 
+			//bodies[i].getVelocity().getX() + ", " + bodies[i].getVelocity().getX() + ")");
 		}
 	}
 
