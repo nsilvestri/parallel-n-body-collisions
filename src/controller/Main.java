@@ -70,14 +70,14 @@ public class Main extends Application
 		Body[] array1 = {
 				new Body(10, 30, 120, 200, -1, 0),
 				new Body(10, 30, 60, 200, 1, 0),
-				new Body(10, 30, 200, 200, -1, 0),
-				new Body(10, 30, 400, 200, 1, 0)
+				//new Body(10, 30, 200, 200, -1, 0),
+				//new Body(10, 30, 400, 200, 1, 0)
 				};
 		
 		//space = new Space(2000, 3, 3, false);
-		space = new Space(10, 3, 16, false);
+		//space = new Space(10, 3, 16, false);
 		//space = new Space(1000, false);
-		//space = new Space(array1);
+		space = new Space(array1);
 		
 		long numTimesteps =10000L; //higher this is, longer it runs
 
@@ -105,9 +105,8 @@ public class Main extends Application
 		
 		
 		//Start the threads 
-		//Thread s = new Thread(space);
-		//s.start();
-		space.start();
+		Thread s = new Thread(space);
+		s.start();
 		
 		//s.join();
 		

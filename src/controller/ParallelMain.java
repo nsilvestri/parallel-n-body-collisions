@@ -37,13 +37,7 @@ public class ParallelMain extends Application
 	private static final int WINDOW_WIDTH = 600;
 	private static final int WINDOW_HEIGHT = 600;
 	
-	private static final int ANIMATION_SPEED = 1; // scales the speed of the animation. 1 is 1x, 2 is 2x, etc
-
 	private SpaceThread[] spaceThreads;
-
-	// when false, animation is continuous
-	// when true, animation is controlled by the user
-	private static boolean stepByStepControl = true;
 
 	@Override
 	public void start(Stage stage) throws Exception
@@ -74,11 +68,11 @@ public class ParallelMain extends Application
 				new Body(10, 30, 400, 200, 1, 0)
 				};
 		
-		Space setup = new Space(2000, 3, 3, false); //testing comparison with sequential
-		//Space setup = new Space(10, 3, 16, false); //testing small amount of bodies
+		//Space setup = new Space(2000, 3, 3, false); //testing comparison with sequential
+		//Space setup = new Space(10, 3, 16, true); //testing small amount of bodies
 		//Space setup = new Space(array1); //testing 4 bodies on parallel line
 		
-		int numThreads = 40;
+		int numThreads = 5;
 		long numTimesteps = 1000L; //higher this is, longer it runs
 		
 		//set up dissemination barrier for threads
@@ -94,8 +88,9 @@ public class ParallelMain extends Application
 		
 		//initialize spacethreads
 		spaceThreads = new SpaceThread[numThreads];
+		spaceThreads[0] = new SpaceThread(2000, 3, 6, false);
 		for (int i = 0; i < numThreads; i++) {
-			spaceThreads[i] = new SpaceThread(setup.getBodies());
+			spaceThreads[i] = new SpaceThread(spaceThreads[0].getBodies());
 			spaceThreads[i].setNumTimesteps(numTimesteps);
 			spaceThreads[i].setParallelmeters(i, numThreads, barrier);
 			spaceThreads[i].setCanvas(canvas);
@@ -104,19 +99,30 @@ public class ParallelMain extends Application
 		window.setTop(canvas);
 
 		/* finish up the stage */
-		//space.setChangedAndNotifyObservers();
 		Scene scene = new Scene(window, WINDOW_WIDTH, WINDOW_HEIGHT);
 		stage.setScene(scene);
-		stage.show();
+		stage.show();		
+		
+		long startTime = 0, testStartTime = 0;
+		startTime = System.nanoTime();
+		
 
-		
-		
 		//Start the threads 
 		for (int i = 0; i < numThreads; i++) {
 			spaceThreads[i].start();
 		}
 		
 		
+		for (int i = 0; i < numThreads; i++) {
+			spaceThreads[i].join();
+		} 
+		
+		// end timer
+		long endTime = System.nanoTime();
+		long duration = (endTime - startTime);
+		System.out.println("Time is " + duration / 1000000000 + " seconds, " + duration / 1000 + " microseconds");
+		return;
+
 	}
 
 	

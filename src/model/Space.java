@@ -12,19 +12,19 @@ import javafx.scene.canvas.GraphicsContext;
  * the core class within the model, and contains the list of objects that
  * inhabit the space. */
 //public class Space extends Observable implements Runnable
-public class Space extends Thread
+public class Space extends Observable implements Runnable
 {
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
 	private final static double timestep = .1 ; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
-	private final int BORDER_WIDTH = 5000; //width constraint that bodies should stay in
-	private final int BORDER_HEIGHT =5000; //height constraint that bodies should stay in
+	private final int BORDER_WIDTH = 600; //width constraint that bodies should stay in
+	private final int BORDER_HEIGHT =600; //height constraint that bodies should stay in
 	private long numTimesteps;
 	private final double overlapTolerance = .3;
 	private Point2D.Double[] forces;
 	private final static boolean borderOn = true;
-	private final static boolean graphicsOn = false;
+	private final static boolean graphicsOn = true;
 	
 	private static int numCollisions = 0;
 	

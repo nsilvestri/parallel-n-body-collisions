@@ -31,7 +31,7 @@ public class CanvasView extends BorderPane implements Observer
 
 		this.setCenter(canvas);
 		
-		space.setGC(gc, canvasWidth, canvasHeight);
+		//space.setGC(gc, canvasWidth, canvasHeight);
 	}
 
 	/* update() is called whenever the observed Space object calls
