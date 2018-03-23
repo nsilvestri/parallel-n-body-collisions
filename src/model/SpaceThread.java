@@ -1,6 +1,8 @@
 package model;
 
 import java.awt.geom.Point2D;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,8 +22,9 @@ public class SpaceThread extends Thread {
 	private long numTimesteps;
 	private final double overlapTolerance = .3;
 	private Point2D.Double[] forces;
-	private final static boolean borderOn = false;
-	private final static boolean graphicsOn = true;
+	private static boolean borderOn;
+	private static boolean graphicsOn;
+	private static boolean dissemination;
 
 	private static AtomicInteger numCollisions = new AtomicInteger(0);
 	private static GraphicsContext gc;
@@ -33,39 +36,16 @@ public class SpaceThread extends Thread {
 	private static int numThreads;
 	private int id;
 	private static Semaphore[][] dissBarrier;
-	
-	private static long testDuration = 0;
-	
-	public void setParallelmeters(int id, int threads, Semaphore[][] barrier) {
-		this.id = id;
-		numThreads = threads;
-		dissBarrier = barrier;
-	}
-
-	public void setCanvas(Canvas c) {
-		canvas = c;
-		gc = canvas.getGraphicsContext2D();
-		canvasWidth = c.getWidth();
-		canvasHeight = c.getHeight();
-	}
-
-	public Canvas getCanvas() {
-		return canvas;
-	}
-
-	public void setNumTimesteps(long n) {
-		numTimesteps = n;
-	}
-
-	public void initializeForces() {
-		forces = new Point2D.Double[nBodies];
-		for (int i = 0; i < nBodies; i++) {
-			forces[i] = new Point2D.Double();
-		}
-	}
-	
-	/* This constructor will be a random constructor of bodies with the given
-	 * properties. */
+	private static CyclicBarrier cycBarrier;
+		
+	/** 
+	 * This constructor randomizes positions and velocities for the bodies.
+	 * Each body will have the same set mass and radius.
+	 * @param nBodies How many bodies there will be
+	 * @param mass Mass for all bodies
+	 * @param radius Radius for all bodies
+	 * @param zeroVel If bodies should start with zero velocity
+	 */
 	public SpaceThread(int nBodies, double mass, double radius, boolean zeroVel)
 	{
 		this.nBodies = nBodies;
@@ -100,9 +80,11 @@ public class SpaceThread extends Thread {
 		initializeForces();
 	}
 
-	/**
+	/** 
 	 * This constructor creates nBodies bodies of random mass and size. The mass is
 	 * the cube of the radius.
+	 * @param nBodies How many total bodies there will be
+	 * @param zeroVel If the bodies should start with zero velocity
 	 */
 	public SpaceThread(int nBodies, boolean zeroVel)
 	{
@@ -132,11 +114,55 @@ public class SpaceThread extends Thread {
 		}
 	}
 	
+	public void setOptions(boolean graphics, boolean border, boolean dissBarrier) {
+		this.graphicsOn = graphics;
+		this.borderOn = border;
+		this.dissemination = dissBarrier;
+	}
+	
+	/**
+	 * @param id Process's id
+	 * @param threads How many total threads there are
+	 * @param barrier A dissemination barrier
+	 * @param cycBar A cyclic barrier
+	 */
+	public void setParallelmeters(int id, int threads, Semaphore[][] barrier, CyclicBarrier cycBar) {
+		this.id = id;
+		numThreads = threads;
+		dissBarrier = barrier;
+		cycBarrier = cycBar;
+	}
 
-	/*
-	 * This method moves two bodies <b1, b2> by a fraction of a timestep <rewind>.
-	 * This is called when two bodies have overlapped more than an allowed
-	 * tolerance. <rewind> should be < 1.
+	public void setCanvas(Canvas c) {
+		canvas = c;
+		gc = canvas.getGraphicsContext2D();
+		canvasWidth = c.getWidth();
+		canvasHeight = c.getHeight();
+	}
+
+	public Canvas getCanvas() {
+		return canvas;
+	}
+
+	public void setNumTimesteps(long n) {
+		numTimesteps = n;
+	}
+
+	public void initializeForces() {
+		forces = new Point2D.Double[nBodies];
+		for (int i = 0; i < nBodies; i++) {
+			forces[i] = new Point2D.Double();
+		}
+	}
+	
+	
+	
+	/** 
+	 * This method moves two bodies by a fraction of a timestep. Called when
+	 * two bodies have overlapped more than an allowed tolerance.
+	 * @param b1 Body 1
+	 * @param b2 Body 2
+	 * @param rewind Fraction of a timestep. Should be < 1
 	 */
 	public synchronized void rewind(Body b1, Body b2, double rewind) {
 
@@ -219,16 +245,13 @@ public class SpaceThread extends Thread {
 				if ((b1.getPosition().distance(b2.getPosition()) < (b1.getRadius() + b2.getRadius()))
 						&& !b1.getPrevCollisions().contains(b2)) {
 					numCollisions.incrementAndGet();
-					// System.out.println("Num collisions: " + numCollisions);
 					// check within tolerance. If it's over the allowed tolerance, rewind until
 					// they're not
 					double overlap = (b1.getRadius() + b2.getRadius()) - b1.getPosition().distance(b2.getPosition());
-					/*
 					if (overlap > overlapTolerance) {
-						// TODO: fix rewind value?
 						double rewind = (overlapTolerance / overlap);
 						rewind(b1, b2, rewind);
-					} */
+					} 
 
 					// add collision to list so we don't include it on the next timestep
 					b1.addCollision(b2);
@@ -274,14 +297,8 @@ public class SpaceThread extends Thread {
 					
 					//testing
 					collided(b1, v1fx, v1fy);
-					collided(b2, v2fx, v2fy);
-					
-					//original
-					//b1.setVelocity(new Point2D.Double(v1fx, v1fy)); // update b1 velocity
-					//b2.setVelocity(new Point2D.Double(v2fx, v2fy));
-					
+					collided(b2, v2fx, v2fy);					
 				}
-
 			}
 			Body b1 = bodies[i];
 
@@ -328,6 +345,13 @@ public class SpaceThread extends Thread {
 		b1.resetCollisions();
 	}
 	
+	/**
+	 * This method is synchronized so that two threads won't try to change a body's
+	 * velocity at the same time.
+	 * @param b Body that needs its velocity changed
+	 * @param velX
+	 * @param velY
+	 */
 	public synchronized void collided(Body b, double velX, double velY) {
 		b.setVelocity(new Point2D.Double(velX, velY));
 	}
@@ -338,26 +362,23 @@ public class SpaceThread extends Thread {
 	}
 
 	@Override
-	
 	public void run() {
-		System.out.println("Process " + id + " running."); //testing
-		// start timer
-		long startTime = 0, testStartTime = 0;
-		long calcForcesTime = 0, moveTime = 0, collTime = 0, barTime = 0;
+		//start timer
+		long startTime = 0;
+		if (id == 0)
+			startTime = System.nanoTime();
+
+		//Run for set amount of timesteps
 		for (int i = 0; i < numTimesteps; i++) {
 			
 			calculateForcesAndUpdateVelocities(id);
-			dissBar();
+			barrier();
 			moveBodies(id);
-			dissBar();
+			barrier();
 			checkCollisions(id);
-			dissBar();
+			barrier();
 			
-			if (id == 0) {
-				// testing
-				//testStartTime = System.nanoTime();
-				//checkCollisions();
-				
+			if (id == 0) {				
 				//graphics option
 				if (graphicsOn) {
 					gc.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -368,40 +389,50 @@ public class SpaceThread extends Thread {
 						double height = bodies[n].getRadius() * 2;			
 						gc.strokeOval(xCorner, yCorner, width, height);
 					} 
-				}
-							
-				/*
-				try {
-					Thread.sleep(5);
-				} catch (InterruptedException e) {
-					System.out.println("Problem sleeping");
-					e.printStackTrace();
-				} */
-				
-				//long testEndTime = System.nanoTime();
-				//testDuration += (testEndTime - testStartTime);
+					//It's easier to see graphics when they're on the screen for longer
+					try {
+						Thread.sleep(5);
+					} catch (InterruptedException e) {
+						System.out.println("Problem sleeping");
+						e.printStackTrace();
+					} 
+				} //end if graphics on
 			}
 			// For testing purposes, in practice comment this
 			if (id == 0 && i % 100 == 0)	System.out.println(i);
 		} //end for loop
 		
 		//Print number of collisions at the end
-		if (id == 0) 
+		if (id == 0) {
+			// end timer
+			long endTime = System.nanoTime();
+			long duration = (endTime - startTime);
+			System.out.println("Time is " + duration / 1000000000 + " seconds, " + duration / 1000 + " microseconds");
 			System.out.println("Detected collisions: " + numCollisions);
+		}
 		return;
 	} 
-	/*
-	public void run() {
-		for (int i = 0;  i < numTimesteps; i++) {
-			dissBar();
-			dissBar();
-		}
-	} */
 
 	public int getNumCollisions() {
 		return numCollisions.get();
 	}
+	
+	public void barrier() {
+		if (dissemination)
+			dissBar();
+		else
+			try {
+				cycBarrier.await();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (BrokenBarrierException e) {
+				e.printStackTrace();
+			}
+	}
 
+	/**
+	 * Standard dissemination barrier
+	 */
 	public void dissBar() {
 		int semSize = (int) Math.ceil(Math.log(numThreads) / Math.log(2));
 
