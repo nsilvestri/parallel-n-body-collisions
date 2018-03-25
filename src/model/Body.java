@@ -1,6 +1,7 @@
 package model;
 
 import java.awt.geom.Point2D;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 /* Body is the objects that inhabit Space and orbit around each other. They have
@@ -193,10 +194,15 @@ public class Body
 		this.prevXWallCollision = collision;
 	}
 
-	/* toString() returns a String representation of this Body, as Body[xPos,
-	 * yPos] */
+	/* toString() returns a String representation of this Body, as Body Pos[xPos,
+	 * yPos] Vel[xVel, yVel]*/
 	public String toString()
 	{
-		return "Body[" + position.getX() + ", " + position.getY() + "]";
+		DecimalFormat df = new DecimalFormat("#.000"); 
+		//return "Body Pos(" + df.format(position.getX()) + ", " + df.format(position.getY()) + ")\t\t\t" +
+					//"Vel[" + df.format(velocity.getX()) + ", " + df.format(velocity.getY()) + "]";
+	
+		return String.format("Body Pos(%11.3f, %11.3f)\t\tVel[%11.3f, %11.3f]", position.getX(), position.getY(),
+				velocity.getX(), velocity.getY());
 	}
 }

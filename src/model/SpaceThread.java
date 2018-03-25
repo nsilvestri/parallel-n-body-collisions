@@ -1,6 +1,9 @@
 package model;
 
 import java.awt.geom.Point2D;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
@@ -9,7 +12,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.paint.Color;
 
 public class SpaceThread extends Thread {
 
@@ -17,14 +19,14 @@ public class SpaceThread extends Thread {
 	private final static double timestep = .1 ; // tickrate of simulation, can be interpreted as units in "seconds"
 	private Body[] bodies;
 	private int nBodies;
-	private final int BORDER_WIDTH = 600; //width constraint that bodies should stay in
-	private final int BORDER_HEIGHT =600; //height constraint that bodies should stay in
+	private static int borderSize;
 	private long numTimesteps;
-	private final double overlapTolerance = .3;
+	private static double overlapTolerance;
 	private Point2D.Double[] forces;
 	private static boolean borderOn;
 	private static boolean graphicsOn;
 	private static boolean dissemination;
+	private static boolean calculateTime;
 
 	private static AtomicInteger numCollisions = new AtomicInteger(0);
 	private static GraphicsContext gc;
@@ -37,6 +39,8 @@ public class SpaceThread extends Thread {
 	private int id;
 	private static Semaphore[][] dissBarrier;
 	private static CyclicBarrier cycBarrier;
+	
+	private long barrierTime, barrierStartTime, barrierEndTime;
 		
 	/** 
 	 * This constructor randomizes positions and velocities for the bodies.
@@ -46,17 +50,19 @@ public class SpaceThread extends Thread {
 	 * @param radius Radius for all bodies
 	 * @param zeroVel If bodies should start with zero velocity
 	 */
-	public SpaceThread(int nBodies, double mass, double radius, boolean zeroVel)
+	public SpaceThread(int nBodies, double mass, double radius, boolean zeroVel, int borderSize)
 	{
 		this.nBodies = nBodies;
 		bodies = new Body[nBodies];
 		forces = new Point2D.Double[nBodies];
+		SpaceThread.borderSize = borderSize;
+		SpaceThread.overlapTolerance = radius / 2;
 
 		for (int i = 0; i < nBodies; i++)
 		{
 			// generates random positions and velocities for bodies
-			double randX = ThreadLocalRandom.current().nextDouble(radius, BORDER_WIDTH - radius);
-			double randY = ThreadLocalRandom.current().nextDouble(radius, BORDER_HEIGHT - radius);
+			double randX = ThreadLocalRandom.current().nextDouble(radius, borderSize - radius);
+			double randY = ThreadLocalRandom.current().nextDouble(radius, borderSize - radius);
 			if (zeroVel) 
 				bodies[i] = new Body(mass, radius, randX, randY, 0, 0);
 			else {
@@ -95,8 +101,8 @@ public class SpaceThread extends Thread {
 		{
 			double randRadius = ThreadLocalRandom.current().nextDouble(2, 50);
 			double mass = Math.pow(randRadius, 3);
-			double randX = ThreadLocalRandom.current().nextDouble(randRadius, BORDER_WIDTH - randRadius);
-			double randY = ThreadLocalRandom.current().nextDouble(randRadius, BORDER_HEIGHT - randRadius);
+			double randX = ThreadLocalRandom.current().nextDouble(randRadius, borderSize - randRadius);
+			double randY = ThreadLocalRandom.current().nextDouble(randRadius, borderSize - randRadius);
 			double randVX = 0, randVY = 0;
 			if (zeroVel) 
 				bodies[i] = new Body(mass, randRadius, randX, randY, 0, 0);
@@ -114,13 +120,18 @@ public class SpaceThread extends Thread {
 		}
 	}
 	
-	public void setOptions(boolean graphics, boolean border, boolean dissBarrier) {
-		this.graphicsOn = graphics;
-		this.borderOn = border;
-		this.dissemination = dissBarrier;
+	public void setOptions(boolean graphics, boolean border, boolean dissBarrier, boolean time) {
+		SpaceThread.graphicsOn = graphics;
+		SpaceThread.borderOn = border;
+		SpaceThread.dissemination = dissBarrier;
+		SpaceThread.calculateTime = time;
+		
+		if (borderOn && borderSize == 0)
+			borderSize = 1000;
 	}
 	
 	/**
+	 * This method sets parameters needed to run in parallel. 
 	 * @param id Process's id
 	 * @param threads How many total threads there are
 	 * @param barrier A dissemination barrier
@@ -154,8 +165,6 @@ public class SpaceThread extends Thread {
 			forces[i] = new Point2D.Double();
 		}
 	}
-	
-	
 	
 	/** 
 	 * This method moves two bodies by a fraction of a timestep. Called when
@@ -295,7 +304,7 @@ public class SpaceThread extends Thread {
 					double denominatorD = Math.pow(x2i - x1i, 2) + Math.pow(y2i - y1i, 2);
 					double v2fy = (blackNumeratorD - redNumeratorD) / denominatorD;
 					
-					//testing
+					//Update velocities of collided bodies
 					collided(b1, v1fx, v1fy);
 					collided(b2, v2fx, v2fy);					
 				}
@@ -306,7 +315,7 @@ public class SpaceThread extends Thread {
 			if (borderOn) {
 				// Check two vertical walls
 				if (b1.getXPos() <= b1.getRadius()
-						|| b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && !b1.getPrevXWallCollision()) {
+						|| b1.getXPos() >= (borderSize - b1.getRadius()) && !b1.getPrevXWallCollision()) {
 					// switch x velocity
 					Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
 					b1.setVelocity(newVel);
@@ -314,7 +323,7 @@ public class SpaceThread extends Thread {
 				}
 				// Check two horizontal walls
 				if (b1.getYPos() <= b1.getRadius()
-						|| b1.getYPos() >= (BORDER_HEIGHT - b1.getRadius()) && !b1.getPrevYWallCollision()) {
+						|| b1.getYPos() >= (borderSize - b1.getRadius()) && !b1.getPrevYWallCollision()) {
 					// switch y velocity
 					Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
 					b1.setVelocity(newVel);
@@ -329,14 +338,14 @@ public class SpaceThread extends Thread {
 		Body b1 = bodies[bodies.length - 1];
 		if (borderOn && id == 0) {
 			if (b1.getXPos() <= b1.getRadius()
-					|| b1.getXPos() >= (BORDER_WIDTH - b1.getRadius()) && !b1.getPrevXWallCollision()) {
+					|| b1.getXPos() >= (borderSize - b1.getRadius()) && !b1.getPrevXWallCollision()) {
 
 				Point2D.Double newVel = new Point2D.Double(-b1.getVelocity().getX(), b1.getVelocity().getY());
 				b1.setVelocity(newVel);
 				b1.setCurrXWallCollision(true);
 			}
 			if (b1.getYPos() <= b1.getRadius()
-					|| b1.getYPos() >= (BORDER_WIDTH - b1.getRadius()) && !b1.getPrevYWallCollision()) {
+					|| b1.getYPos() >= (borderSize - b1.getRadius()) && !b1.getPrevYWallCollision()) {
 				Point2D.Double newVel = new Point2D.Double(b1.getVelocity().getX(), -b1.getVelocity().getY());
 				b1.setVelocity(newVel);
 				b1.setCurrYWallCollision(true);
@@ -355,6 +364,10 @@ public class SpaceThread extends Thread {
 	public synchronized void collided(Body b, double velX, double velY) {
 		b.setVelocity(new Point2D.Double(velX, velY));
 	}
+	
+	public long getBarrierTime() {
+		return barrierTime;
+	}
 
 	/* getBodies() returns the array containing the bodies. */
 	public Body[] getBodies() {
@@ -367,6 +380,8 @@ public class SpaceThread extends Thread {
 		long startTime = 0;
 		if (id == 0)
 			startTime = System.nanoTime();
+		
+		
 
 		//Run for set amount of timesteps
 		for (int i = 0; i < numTimesteps; i++) {
@@ -376,7 +391,7 @@ public class SpaceThread extends Thread {
 			moveBodies(id);
 			barrier();
 			checkCollisions(id);
-			barrier();
+			
 			
 			if (id == 0) {				
 				//graphics option
@@ -398,6 +413,7 @@ public class SpaceThread extends Thread {
 					} 
 				} //end if graphics on
 			}
+			barrier();
 			// For testing purposes, in practice comment this
 			if (id == 0 && i % 100 == 0)	System.out.println(i);
 		} //end for loop
@@ -410,6 +426,21 @@ public class SpaceThread extends Thread {
 			System.out.println("Time is " + duration / 1000000000 + " seconds, " + duration / 1000 + " microseconds");
 			System.out.println("Detected collisions: " + numCollisions);
 		}
+		
+		//Write final bodies to file
+		if (id == 0) {
+			PrintWriter writer = null;
+			try {
+				writer = new PrintWriter(new FileWriter("FinalBodies.txt"));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			for (Body b : bodies) {
+				writer.println(b.toString());
+			}
+			writer.close();
+			System.out.println("Printed final positions and velocities to FinalBodies.txt");
+		}
 		return;
 	} 
 
@@ -418,6 +449,9 @@ public class SpaceThread extends Thread {
 	}
 	
 	public void barrier() {
+		if (calculateTime) 
+			barrierStartTime = System.nanoTime();
+			
 		if (dissemination)
 			dissBar();
 		else
@@ -428,6 +462,13 @@ public class SpaceThread extends Thread {
 			} catch (BrokenBarrierException e) {
 				e.printStackTrace();
 			}
+		
+		if (calculateTime) {
+			barrierEndTime = System.nanoTime();
+			barrierTime += (barrierEndTime - barrierStartTime);
+		}
+			
+		
 	}
 
 	/**
