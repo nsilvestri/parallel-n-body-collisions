@@ -197,11 +197,9 @@ public class ParallelCollisions {
 			long avg = 0;
 			for (int i = 0; i < numThreads; i++) {
 				avg += spaceThreads[i].getBarrierTime();
-				System.out.println(
-						"Process " + i + " spent " + spaceThreads[i].getBarrierTime() + " nanoseconds in the barrier");
 			}
 			avg /= numThreads;
-			System.out.println("The average time was " + avg + " nanoseconds.");
+			System.out.println("Processes spent an average of " + avg + " nanosecs inside barriers");
 		}
 
 		return;
