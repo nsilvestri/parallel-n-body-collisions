@@ -1,32 +1,36 @@
 package controller;
 
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Scanner;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 
+/*
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+*/
 import model.Body;
 import model.SpaceThread;
+
 
 /* Main is the class that starts the application. This initializes the stage,
  * scene, observers, and model of the program.
  * 
  */
 
-public class ParallelCollisions extends Application {
+public class ParallelCollisions {
 
 	// Graphics
-	private BorderPane window;
+	//private BorderPane window;
 	private static final int WINDOW_WIDTH = 600;
 	private static final int WINDOW_HEIGHT = 600;
 
-	private SpaceThread[] spaceThreads;
+	private static SpaceThread[] spaceThreads;
 	static int numThreads = 1;
 	static long numTimesteps = 1000L; // higher this is, longer it runs
 	static boolean graphicsOn = false;
@@ -39,7 +43,7 @@ public class ParallelCollisions extends Application {
 	static int borderSize = 4000;
 	static double bodyMass;
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException, InterruptedException {
 
 		/*
 		 * TO RUN java ParallelCollisions <numThreads> <numBodies> <radius of bodies>
@@ -105,34 +109,13 @@ public class ParallelCollisions extends Application {
 			System.out.printf(" with a border %d x %d.\n", borderSize, borderSize);
 		else
 			System.out.println(" with no border.");
-		launch(args);
+		//launch(args);
+		start();
 	}
 
-	@Override
-	public void start(Stage stage) throws Exception {
-
-		// Randomized array that looked decent
-		Body[] array = {
-				new Body(25388.441286344863, 29.390840964489193, 448.9467795643991, 564.5256188402906,
-						-9.291226629287745, -6.7910985178494006),
-				new Body(187.05890681361907, 5.7190794606209305, 560.2787346228214, 554.6582250802596,
-						-6.620672415580502, 2.482329560612527),
-				new Body(11467.14417820409, 22.55027059732616, 442.126881645475, 437.32199775139327, -5.017058998361533,
-						-12.143126544126945),
-				new Body(348.84174578094377, 7.03951627092418, 533.1709300693376, 253.36976522346126,
-						-1.073590481525681, 1.8662525049244323),
-				new Body(39364.607674990024, 34.017467286285886, 265.19624294561584, 40.4990576995452,
-						-11.32506249147888, 7.914679504073565),
-				new Body(2390.2772048938787, 13.370554644426129, 69.10206141819627, 19.72765613216687,
-						-1.4227619587879783, -8.238036887458327),
-				new Body(84736.41202364455, 43.922800584843884, 185.80587961282615, 311.99644955987344,
-						-7.19690127613096, -8.20265328376879),
-				new Body(36895.79379853321, 33.29090638331068, 408.6185796661888, 312.0772879068162, -9.030191563134974,
-						-12.937019779130122),
-				new Body(419.7934102355361, 7.487644309346576, 550.5450315452638, 15.422124159358741, 0.473104024527343,
-						1.8473554825013672),
-				new Body(22115.946501668193, 28.06953233286172, 328.1435961310157, 259.27366348952455,
-						10.833319076798809, -3.469452207277472) };
+	//@Override
+	//public void start(Stage stage) throws Exception {
+	public static void start() throws IOException, InterruptedException {
 
 		// Four bodies in single line
 		Body[] array1 = { new Body(10, 30, 120, 200, -1, 0), new Body(10, 30, 60, 200, 1, 0),
@@ -150,7 +133,7 @@ public class ParallelCollisions extends Application {
 		// set up cyclic barrier for threads
 		CyclicBarrier cycBarrier = new CyclicBarrier(numThreads);
 
-		Canvas canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
+		//Canvas canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 		// initialize spacethreads
 		spaceThreads = new SpaceThread[numThreads];
@@ -163,11 +146,12 @@ public class ParallelCollisions extends Application {
 			spaceThreads[i] = new SpaceThread(spaceThreads[0].getBodies());
 			spaceThreads[i].setNumTimesteps(numTimesteps);
 			spaceThreads[i].setParallelmeters(i, numThreads, dissBarrier, cycBarrier);
-			spaceThreads[i].setCanvas(canvas);
+			//spaceThreads[i].setCanvas(canvas);
 		}
 
 		/* initialize stage */
 
+		/*
 		if (graphicsOn) {
 			stage.setTitle("n-Body Collisions");
 			window = new BorderPane();
@@ -176,6 +160,7 @@ public class ParallelCollisions extends Application {
 			stage.setScene(scene);
 			stage.show();
 		}
+		*/
 
 		// Print starting locations to a file
 		PrintWriter writer = new PrintWriter(new FileWriter("StartingBodies.txt"));
@@ -191,11 +176,11 @@ public class ParallelCollisions extends Application {
 
 		// if we join the threads, the graphics doesn't work
 
-		if (!graphicsOn) {
-			for (int i = 0; i < numThreads; i++) {
-				spaceThreads[i].join();
-			}
-		} 
+		//if (!graphicsOn) {
+		for (int i = 0; i < numThreads; i++) {
+			spaceThreads[i].join();
+		}
+		//} 
 
 		// write final body positions / velocities to file
 		/*

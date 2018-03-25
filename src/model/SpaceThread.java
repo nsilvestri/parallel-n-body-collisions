@@ -10,8 +10,10 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/*
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+*/
 
 public class SpaceThread extends Thread {
 
@@ -29,10 +31,10 @@ public class SpaceThread extends Thread {
 	private static boolean calculateTime;
 
 	private static AtomicInteger numCollisions = new AtomicInteger(0);
-	private static GraphicsContext gc;
+	//private static GraphicsContext gc;
 	private double canvasWidth;
 	private double canvasHeight;
-	private static Canvas canvas;
+	//private static Canvas canvas;
 
 	// parallelization variables
 	private static int numThreads;
@@ -144,16 +146,19 @@ public class SpaceThread extends Thread {
 		cycBarrier = cycBar;
 	}
 
+	/*
 	public void setCanvas(Canvas c) {
 		canvas = c;
 		gc = canvas.getGraphicsContext2D();
 		canvasWidth = c.getWidth();
 		canvasHeight = c.getHeight();
 	}
+	
 
 	public Canvas getCanvas() {
 		return canvas;
 	}
+	*/
 
 	public void setNumTimesteps(long n) {
 		numTimesteps = n;
@@ -395,6 +400,7 @@ public class SpaceThread extends Thread {
 			
 			if (id == 0) {				
 				//graphics option
+				/*
 				if (graphicsOn) {
 					gc.clearRect(0, 0, canvasWidth, canvasHeight);
 					for (int n = 0; n < nBodies; n++) {
@@ -412,6 +418,7 @@ public class SpaceThread extends Thread {
 						e.printStackTrace();
 					} 
 				} //end if graphics on
+				*/
 			}
 			barrier();
 			// For testing purposes, in practice comment this
