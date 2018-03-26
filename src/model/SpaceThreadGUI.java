@@ -10,12 +10,12 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/*
+
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-*/
 
-public class SpaceThread extends Thread {
+
+public class SpaceThreadGUI extends Thread {
 
 	private final static double G = 6.67e-2; // gravitational constant, currently 10^8 times bigger than real life
 	private final static double timestep = .1 ; // tickrate of simulation, can be interpreted as units in "seconds"
@@ -31,10 +31,10 @@ public class SpaceThread extends Thread {
 	private static boolean calculateTime;
 
 	private static AtomicInteger numCollisions = new AtomicInteger(0);
-	//private static GraphicsContext gc;
+	private static GraphicsContext gc;
 	private double canvasWidth;
 	private double canvasHeight;
-	//private static Canvas canvas;
+	private static Canvas canvas;
 
 	// parallelization variables
 	private static int numThreads;
@@ -52,13 +52,13 @@ public class SpaceThread extends Thread {
 	 * @param radius Radius for all bodies
 	 * @param zeroVel If bodies should start with zero velocity
 	 */
-	public SpaceThread(int nBodies, double mass, double radius, boolean zeroVel, int borderSize)
+	public SpaceThreadGUI(int nBodies, double mass, double radius, boolean zeroVel, int borderSize)
 	{
 		this.nBodies = nBodies;
 		bodies = new Body[nBodies];
 		forces = new Point2D.Double[nBodies];
-		SpaceThread.borderSize = borderSize;
-		SpaceThread.overlapTolerance = radius / 2;
+		SpaceThreadGUI.borderSize = borderSize;
+		SpaceThreadGUI.overlapTolerance = radius / 2;
 
 		for (int i = 0; i < nBodies; i++)
 		{
@@ -81,7 +81,7 @@ public class SpaceThread extends Thread {
 	}
 
 	/* This constructor allows the initialization of preset bodies. */
-	public SpaceThread(Body[] bodies)
+	public SpaceThreadGUI(Body[] bodies)
 	{
 		this.nBodies = bodies.length;
 		this.bodies = bodies;
@@ -94,7 +94,7 @@ public class SpaceThread extends Thread {
 	 * @param nBodies How many total bodies there will be
 	 * @param zeroVel If the bodies should start with zero velocity
 	 */
-	public SpaceThread(int nBodies, boolean zeroVel)
+	public SpaceThreadGUI(int nBodies, boolean zeroVel)
 	{
 		bodies = new Body[nBodies];
 		forces = new Point2D.Double[nBodies];
@@ -123,10 +123,10 @@ public class SpaceThread extends Thread {
 	}
 	
 	public void setOptions(boolean graphics, boolean border, boolean dissBarrier, boolean time) {
-		SpaceThread.graphicsOn = graphics;
-		SpaceThread.borderOn = border;
-		SpaceThread.dissemination = dissBarrier;
-		SpaceThread.calculateTime = time;
+		SpaceThreadGUI.graphicsOn = graphics;
+		SpaceThreadGUI.borderOn = border;
+		SpaceThreadGUI.dissemination = dissBarrier;
+		SpaceThreadGUI.calculateTime = time;
 		
 		if (borderOn && borderSize == 0)
 			borderSize = 1000;
@@ -146,7 +146,7 @@ public class SpaceThread extends Thread {
 		cycBarrier = cycBar;
 	}
 
-	/*
+	
 	public void setCanvas(Canvas c) {
 		canvas = c;
 		gc = canvas.getGraphicsContext2D();
@@ -158,7 +158,7 @@ public class SpaceThread extends Thread {
 	public Canvas getCanvas() {
 		return canvas;
 	}
-	*/
+	
 
 	public void setNumTimesteps(long n) {
 		numTimesteps = n;
@@ -400,7 +400,7 @@ public class SpaceThread extends Thread {
 			
 			if (id == 0) {				
 				//graphics option
-				/*
+				
 				if (graphicsOn) {
 					gc.clearRect(0, 0, canvasWidth, canvasHeight);
 					for (int n = 0; n < nBodies; n++) {
@@ -418,11 +418,11 @@ public class SpaceThread extends Thread {
 						e.printStackTrace();
 					} 
 				} //end if graphics on
-				*/
+				
 			}
 			barrier();
 			// For testing purposes, in practice comment this
-			if (id == 0 && i % 100 == 0)	System.out.println(i);
+			//if (id == 0 && i % 100 == 0)	System.out.println(i);
 		} //end for loop
 		
 		//Print number of collisions at the end
@@ -430,7 +430,7 @@ public class SpaceThread extends Thread {
 			// end timer
 			long endTime = System.nanoTime();
 			long duration = (endTime - startTime);
-			System.out.println("Time is " + duration / 1000000000 + " seconds, " + duration / 1000 + " microseconds");
+			System.out.println("computation time: " + duration / 1000000000 + " seconds, " + duration / 1000 + " microseconds");
 			System.out.println("Detected collisions: " + numCollisions);
 		}
 		
@@ -446,7 +446,6 @@ public class SpaceThread extends Thread {
 				writer.println(b.toString());
 			}
 			writer.close();
-			System.out.println("Printed final positions and velocities to FinalBodies.txt");
 		}
 		return;
 	} 

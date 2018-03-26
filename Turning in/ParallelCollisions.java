@@ -12,8 +12,6 @@ import java.util.concurrent.Semaphore;
 
 public class ParallelCollisions {
 
-	// Graphics
-
 	private static SpaceThread[] spaceThreads;
 	static int numThreads = 1;
 	static long numTimesteps = 1000L; // higher this is, longer it runs
@@ -93,10 +91,6 @@ public class ParallelCollisions {
 
 	public static void start() throws IOException, InterruptedException {
 
-		// Four bodies in single line
-		Body[] array1 = { new Body(10, 30, 120, 200, -1, 0), new Body(10, 30, 60, 200, 1, 0),
-				new Body(10, 30, 200, 200, -1, 0), new Body(10, 30, 400, 200, 1, 0) };
-
 		// set up dissemination barrier for threads
 		int semSize = (int) Math.ceil(Math.log(numThreads) / Math.log(2));
 		Semaphore[][] dissBarrier = new Semaphore[semSize][numThreads];
@@ -118,7 +112,6 @@ public class ParallelCollisions {
 			spaceThreads[i] = new SpaceThread(spaceThreads[0].getBodies());
 			spaceThreads[i].setNumTimesteps(numTimesteps);
 			spaceThreads[i].setParallelmeters(i, numThreads, dissBarrier, cycBarrier);
-			//spaceThreads[i].setCanvas(canvas);
 		}
 
 		// Print starting locations to a file

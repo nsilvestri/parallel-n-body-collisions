@@ -7,15 +7,15 @@ import java.util.Scanner;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.Semaphore;
 
-/*
+
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
-*/
+
 import model.Body;
-import model.SpaceThread;
+import model.SpaceThreadGUI;
 
 
 /* Main is the class that starts the application. This initializes the stage,
@@ -23,17 +23,17 @@ import model.SpaceThread;
  * 
  */
 
-public class ParallelCollisions {
+public class ParallelCollisionsGUI extends Application{
 
 	// Graphics
-	//private BorderPane window;
+	private BorderPane window;
 	private static final int WINDOW_WIDTH = 600;
 	private static final int WINDOW_HEIGHT = 600;
 
-	private static SpaceThread[] spaceThreads;
+	private static SpaceThreadGUI[] spaceThreads;
 	static int numThreads = 1;
 	static long numTimesteps = 1000L; // higher this is, longer it runs
-	static boolean graphicsOn = false;
+	static boolean graphicsOn = true;
 	static boolean dissemination = true; // dissemination or cyclic barrier
 	static boolean borderOn = false;
 	static boolean zeroVel = false;
@@ -52,7 +52,7 @@ public class ParallelCollisions {
 		 */
 
 		if (args.length < 4) {
-			System.out.println("To run: java ParallelCollisions <numThreads> <numBodies> <body radius> "
+			System.out.println("To run: java ParallelCollisionsGUI <numThreads> <numBodies> <body radius> "
 					+ "<numTimesteps> <extra parameters, 'y' (no by default)>");
 			return;
 		} else {
@@ -61,6 +61,7 @@ public class ParallelCollisions {
 			bodyRadius = Double.parseDouble(args[2]);
 			numTimesteps = Integer.parseInt(args[3]);
 			borderSize = (int) ((bodyRadius*2*numBodies));
+			
 			// extra parameters prompting
 			if (args.length == 5 && args[4].equals("y")) {
 				// Barrier option
@@ -76,6 +77,9 @@ public class ParallelCollisions {
 					borderOn = true;
 					
 					System.out.println("Border size is " + borderSize);
+					System.out.println("To change border to fit window, press 'y'");
+					if (scanner.nextLine().equals("y"))
+						borderSize = 600;
 				}
 				
 
@@ -83,10 +87,6 @@ public class ParallelCollisions {
 				System.out.println("Start bodies off with zero velocity? 'y' or 'n'");
 				if (scanner.nextLine().equals("y"))
 					zeroVel = true;
-
-				System.out.println("Graphics on 'y'?");
-				if (scanner.nextLine().equals("y"))
-					graphicsOn = true;
 				
 				scanner.close();
 			}
@@ -109,14 +109,11 @@ public class ParallelCollisions {
 			System.out.printf(" with a border %d x %d.\n", borderSize, borderSize);
 		else
 			System.out.println(" with no border.");
-		//launch(args);
-		start();
+		launch(args);
 	}
 
-	//@Override
-	//public void start(Stage stage) throws Exception {
-	public static void start() throws IOException, InterruptedException {
-
+	@Override
+	public void start(Stage stage) throws Exception {
 		// Four bodies in single line
 		Body[] array1 = { new Body(10, 30, 120, 200, -1, 0), new Body(10, 30, 60, 200, 1, 0),
 				new Body(10, 30, 200, 200, -1, 0), new Body(10, 30, 400, 200, 1, 0) };
@@ -133,25 +130,22 @@ public class ParallelCollisions {
 		// set up cyclic barrier for threads
 		CyclicBarrier cycBarrier = new CyclicBarrier(numThreads);
 
-		//Canvas canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
+		Canvas canvas = new Canvas(WINDOW_WIDTH, WINDOW_HEIGHT);
 
 		// initialize spacethreads
-		spaceThreads = new SpaceThread[numThreads];
-		spaceThreads[0] = new SpaceThread(numBodies, bodyMass, bodyRadius, zeroVel, borderSize);
-		// spaceThreads[0] = new SpaceThread(array1);
-		// spaceThreads[0] = new SpaceThread(3, 3, 10, false);
+		spaceThreads = new SpaceThreadGUI[numThreads];
+		spaceThreads[0] = new SpaceThreadGUI(numBodies, bodyMass, bodyRadius, zeroVel, borderSize);
+		//spaceThreads[0] = new SpaceThreadGUI(array1);
 
 		spaceThreads[0].setOptions(graphicsOn, borderOn, dissemination, timingOn);
 		for (int i = 0; i < numThreads; i++) {
-			spaceThreads[i] = new SpaceThread(spaceThreads[0].getBodies());
+			spaceThreads[i] = new SpaceThreadGUI(spaceThreads[0].getBodies());
 			spaceThreads[i].setNumTimesteps(numTimesteps);
 			spaceThreads[i].setParallelmeters(i, numThreads, dissBarrier, cycBarrier);
-			//spaceThreads[i].setCanvas(canvas);
+			spaceThreads[i].setCanvas(canvas);
 		}
 
-		/* initialize stage */
-
-		/*
+		/* initialize stage */		
 		if (graphicsOn) {
 			stage.setTitle("n-Body Collisions");
 			window = new BorderPane();
@@ -160,7 +154,7 @@ public class ParallelCollisions {
 			stage.setScene(scene);
 			stage.show();
 		}
-		*/
+		
 
 		// Print starting locations to a file
 		PrintWriter writer = new PrintWriter(new FileWriter("StartingBodies.txt"));
@@ -175,32 +169,11 @@ public class ParallelCollisions {
 		}
 
 		// if we join the threads, the graphics doesn't work
-
-		//if (!graphicsOn) {
-		for (int i = 0; i < numThreads; i++) {
-			spaceThreads[i].join();
-		}
-		//} 
-
-		// write final body positions / velocities to file
-		/*
-		writer = new PrintWriter(new FileWriter("FinalBodies.txt"));
-		for (Body b : spaceThreads[0].getBodies()) {
-			writer.println(b.toString());
-		}
-		writer.close();
-		System.out.println("Printed final positions and velocities to FinalBodies.txt");
-		*/
-
-		// timing
-		if (timingOn) {
-			long avg = 0;
+		if (!graphicsOn) {
 			for (int i = 0; i < numThreads; i++) {
-				avg += spaceThreads[i].getBarrierTime();
+				spaceThreads[i].join();
 			}
-			avg /= numThreads;
-			System.out.println("Processes spent an average of " + avg + " nanosecs inside barriers");
-		}
+		} 
 
 		return;
 
